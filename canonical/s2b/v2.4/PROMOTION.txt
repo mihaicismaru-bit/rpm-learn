@@ -1,0 +1,8 @@
+RPM-S2B v2.4 canonical promotion staging
+fingerprint=f1b12ee3fec0a738b3dc9f17e82da2250769b3e5ff5fd9a3a35026e19db2987d
+package_sha256=7999278085e246133f5012be41fb710e317c051e9345f4ad19b246e59bb83d36
+status=STAGING_FAIL_CLOSED_RUNTIME_GATE_OPEN
+production_release=false
+real_data=false
+legal_claims=false
+certificate_issuance=false
