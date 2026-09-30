@@ -1,0 +1,12 @@
+{
+  "name": "RPM LEARN — Test Preview",
+  "short_name": "RPM LEARN",
+  "description": "Internal test preview for Romanian for Work learning.",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f7fb",
+  "theme_color": "#155e75",
+  "icons": [{"src":"./icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
+}
