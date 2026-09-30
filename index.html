@@ -108,7 +108,7 @@
         <button id="nextBtn" class="primary hidden">Continuă</button>
       </div>
     </div>
-    <div class="note">Timpul demo crește doar când pagina este vizibilă și există interacțiune recentă. Screen time ≠ automat timp valid de conformare.</div>
+    <div class="note">Audio preview: selectăm explicit o voce românească; dacă dispozitivul nu are una, folosim temporar un fallback TTS românesc. În produsul final folosim audio validat din curriculum. Timpul demo crește doar când pagina este vizibilă și există interacțiune recentă. Screen time ≠ automat timp valid de conformare.</div>
   </section>
 </div>
 <script>
@@ -132,7 +132,51 @@ function refreshStats(){
  document.getElementById("xp").textContent=xp;document.getElementById("active").textContent=fmt(activeSeconds);document.getElementById("weekly").textContent=Math.floor(activeSeconds/60)+"m";
  document.getElementById("homeXp").textContent=xp;document.getElementById("homeActive").textContent=Math.floor(activeSeconds/60)+"m";document.getElementById("homeProgress").textContent=Math.round(i/items.length*100)+"%";
 }
-function speak(t){if("speechSynthesis"in window){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang="ro-RO";u.rate=.85;speechSynthesis.speak(u)}}
+let rpmRomanianVoice=null;
+function resolveRomanianVoice(){
+  if(!("speechSynthesis" in window)) return null;
+  const voices=window.speechSynthesis.getVoices();
+  rpmRomanianVoice=
+    voices.find(v=>/^ro[-_]/i.test(v.lang||"")) ||
+    voices.find(v=>/roman/i.test(v.name||"")) ||
+    null;
+  return rpmRomanianVoice;
+}
+if("speechSynthesis" in window){
+  resolveRomanianVoice();
+  window.speechSynthesis.addEventListener?.("voiceschanged",resolveRomanianVoice);
+}
+function previewRemoteRomanianTts(t){
+  const url="https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=ro&q="+encodeURIComponent(t);
+  const a=new Audio(url);
+  a.preload="auto";
+  a.playbackRate=.92;
+  return a.play();
+}
+async function speak(t){
+  touch();
+  const v=resolveRomanianVoice();
+  if(v){
+    window.speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(t);
+    u.voice=v;
+    u.lang=v.lang||"ro-RO";
+    u.rate=.72;
+    u.pitch=.95;
+    u.volume=1;
+    window.speechSynthesis.speak(u);
+    return;
+  }
+  try{
+    await previewRemoteRomanianTts(t);
+  }catch(e){
+    const fb=document.getElementById("feedback");
+    if(fb){
+      fb.textContent="Nu am găsit o voce românească inteligibilă pe acest dispozitiv. Audio-ul final va folosi înregistrările validate ale cursului.";
+      fb.className="feedback bad";
+    }
+  }
+}
 function renderWords(){
  const a=document.getElementById("answerZone");a.innerHTML=arranged.length?arranged.map((w,n)=>'<button class="word" data-remove="'+n+'">'+w+'</button>').join(""):"Atinge cuvintele în ordine";
  const rem=items[i].words.slice();arranged.forEach(w=>{const k=rem.indexOf(w);if(k>=0)rem.splice(k,1)});
