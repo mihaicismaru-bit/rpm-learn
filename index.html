@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#155e75">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <title>RPM LEARN — Preview</title>
+  <style>
+    :root{
+      --bg:#f4f7fb;--card:#ffffff;--ink:#172033;--muted:#667085;--line:#e4e9f1;
+      --brand:#155e75;--brand2:#e6f6fa;--ok:#16794a;--okbg:#eaf8f0;--bad:#9f2936;--badbg:#fff0f2;
+      --accent:#f59e0b;--shadow:0 16px 40px rgba(15,23,42,.08)
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:linear-gradient(180deg,#eef7fb 0,#f4f7fb 260px);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--ink)}
+    button{font:inherit}
+    .shell{max-width:520px;margin:0 auto;min-height:100vh;padding:16px 14px 34px}
+    .top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:4px 0 14px}
+    .logo{font-weight:900;letter-spacing:.035em}
+    .test{font-size:11px;font-weight:800;letter-spacing:.06em;padding:7px 10px;border-radius:999px;background:#fff3d9;color:#7b5200;border:1px solid #f0dda7}
+    .hero{background:linear-gradient(135deg,#155e75,#0e7490);color:white;border-radius:26px;padding:22px;box-shadow:var(--shadow);margin-bottom:14px}
+    .hero small{opacity:.8}.hero h1{font-size:29px;line-height:1.08;margin:8px 0 10px}.hero p{margin:0;line-height:1.5;opacity:.92}
+    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}
+    .stat{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:11px 10px;text-align:center}
+    .stat strong{display:block;font-size:17px}.stat span{font-size:11px;color:var(--muted)}
+    .panel{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:18px;box-shadow:var(--shadow)}
+    .lessonCard{display:flex;gap:14px;align-items:center}
+    .lessonIcon{width:52px;height:52px;border-radius:17px;background:var(--brand2);display:grid;place-items:center;font-size:26px}
+    .lessonMeta{flex:1}.lessonMeta small{color:var(--muted)}.lessonMeta h2{font-size:18px;margin:4px 0}.lessonMeta p{font-size:13px;color:var(--muted);margin:0}
+    .primary,.secondary,.option,.audio,.word{border:0;cursor:pointer}
+    .primary{width:100%;margin-top:16px;background:var(--brand);color:white;border-radius:15px;padding:14px 16px;font-weight:800}
+    .secondary{background:#edf1f5;color:var(--ink);border-radius:15px;padding:13px 15px;font-weight:700}
+    .hidden{display:none!important}
+    .progressRow{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;margin:8px 0 14px}
+    .progress{height:11px;border-radius:999px;background:#e5ebf1;overflow:hidden}.progress div{height:100%;background:var(--brand);transition:.25s}
+    .lessonHead{display:flex;justify-content:space-between;align-items:start;gap:10px}.lessonHead h1{font-size:25px;line-height:1.15;margin:4px 0 4px}.lessonHead small{color:var(--muted)}
+    .kicker{font-size:11px;font-weight:900;color:var(--brand);letter-spacing:.08em;text-transform:uppercase}
+    .prompt{font-size:19px;line-height:1.4;margin:18px 0 14px}
+    .scenario{background:var(--brand2);padding:14px 15px;border-radius:15px;line-height:1.45;margin-bottom:14px}
+    .options{display:grid;gap:10px}.option{background:white;border:1px solid var(--line);border-radius:14px;padding:14px 15px;text-align:left;font-size:16px}.option.selected{border:2px solid var(--brand);background:var(--brand2)}
+    .audio{display:inline-flex;align-items:center;gap:8px;background:#eef6ff;border:1px solid #d9e8f5;border-radius:14px;padding:11px 13px;margin-bottom:12px}
+    .answerZone{min-height:56px;border:2px dashed #c9d4df;border-radius:14px;padding:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;color:var(--muted)}
+    .words{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.word{background:white;border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+    .feedback{display:none;margin-top:14px;padding:12px 14px;border-radius:14px;line-height:1.4}.feedback.ok{display:block;background:var(--okbg);color:var(--ok)}.feedback.bad{display:block;background:var(--badbg);color:var(--bad)}
+    .actions{display:flex;gap:10px;margin-top:17px}.actions .primary{margin:0;flex:1}.actions .secondary{flex:0 0 auto}
+    .speak{border:1px solid var(--line);border-radius:16px;padding:14px}.review{margin-top:10px;background:#f4f0ff;color:#5c4091;padding:10px 12px;border-radius:12px;font-size:13px}
+    .note{font-size:12px;color:var(--muted);line-height:1.5;margin:14px 4px}
+    .complete{text-align:center;padding:12px}.complete .big{font-size:44px}.complete h2{font-size:25px;margin:8px 0}
+  </style>
+</head>
+<body>
+<div class="shell">
+  <div class="top">
+    <div class="logo">RPM LEARN</div>
+    <div class="test">TEST · NOT PRODUCTION</div>
+  </div>
+
+  <section id="home">
+    <div class="hero">
+      <small>Română pentru muncă</small>
+      <h1>Învață puțin câte puțin, direct de pe telefon.</h1>
+      <p>Preview intern pentru adulți 16+. Conținut demo din traseul preA1 RLS-07.</p>
+    </div>
+    <div class="stats">
+      <div class="stat"><strong id="homeXp">0</strong><span>XP</span></div>
+      <div class="stat"><strong id="homeActive">0m</strong><span>timp activ</span></div>
+      <div class="stat"><strong id="homeProgress">0%</strong><span>lecție</span></div>
+    </div>
+    <div class="panel">
+      <div class="lessonCard">
+        <div class="lessonIcon">💬</div>
+        <div class="lessonMeta">
+          <small>RLS-07 · 16+ · preA1</small>
+          <h2>Când ai nevoie de ajutor</h2>
+          <p>Ascultă, alege, construiește și repetă expresii simple.</p>
+        </div>
+      </div>
+      <button id="startBtn" class="primary">Începe lecția</button>
+    </div>
+    <div class="note">Date sintetice/demo. Fără autentificare reală, fără date de angajator și fără certificate.</div>
+  </section>
+
+  <section id="lesson" class="hidden">
+    <div class="progressRow">
+      <div class="progress"><div id="bar"></div></div>
+      <strong id="step">1/8</strong>
+    </div>
+    <div class="stats">
+      <div class="stat"><strong id="xp">0</strong><span>XP</span></div>
+      <div class="stat"><strong id="active">00:00</strong><span>timp activ</span></div>
+      <div class="stat"><strong id="weekly">0m</strong><span>săptămână</span></div>
+    </div>
+    <div class="panel">
+      <div class="lessonHead">
+        <div>
+          <div class="kicker">RLS-07 · 16+ · preA1</div>
+          <h1>Când ai nevoie de ajutor</h1>
+          <small>Preview learner</small>
+        </div>
+      </div>
+      <div id="exercise"></div>
+      <div id="feedback" class="feedback"></div>
+      <div class="actions">
+        <button id="homeBtn" class="secondary">Acasă</button>
+        <button id="checkBtn" class="primary">Verifică</button>
+        <button id="nextBtn" class="primary hidden">Continuă</button>
+      </div>
+    </div>
+    <div class="note">Timpul demo crește doar când pagina este vizibilă și există interacțiune recentă. Screen time ≠ automat timp valid de conformare.</div>
+  </section>
+</div>
+<script>
+const items=[
+ {type:"listen",prompt:"Ascultă și alege expresia auzită.",audio:"Nu înțeleg.",choices:["Nu înțeleg.","Am terminat.","Este corect?"],correct:"Nu înțeleg.",ok:"Corect. Spui «Nu înțeleg.» când ai nevoie de explicație.",bad:"Ascultă încă o dată."},
+ {type:"choice",prompt:"Ce spui în această situație?",scenario:"Profesorul vorbește prea repede.",choices:["Mai încet, vă rog.","Unde scriu?","Am terminat."],correct:"Mai încet, vă rog.",ok:"Exact. Ceri simplu ca persoana să vorbească mai încet.",bad:"Caută expresia despre ritmul vorbirii."},
+ {type:"order",prompt:"Pune cuvintele în ordine.",words:["VĂ","ÎNCET","ROG","MAI"],correct:["MAI","ÎNCET","VĂ","ROG"],ok:"Foarte bine: «Mai încet, vă rog.»",bad:"Începe cu «Mai»."},
+ {type:"listen",prompt:"Ascultă. Ce vrea persoana?",audio:"Repetați, vă rog.",choices:["Să audă din nou.","Să plece.","Să scrie un nume."],correct:"Să audă din nou.",ok:"Corect. Cere repetarea informației.",bad:"Gândește-te la verbul «repetați»."},
+ {type:"choice",prompt:"Ce spui în această situație?",scenario:"Nu știi unde trebuie să scrii.",choices:["Unde scriu?","Nu înțeleg.","Am terminat."],correct:"Unde scriu?",ok:"Corect. Întrebarea este directă și clară.",bad:"Alege întrebarea despre locul unde scrii."},
+ {type:"speak",prompt:"Ascultă și repetă.",audio:"Mai încet, vă rog.",ok:"Proba demo este marcată pentru validarea profesorului.",bad:"Înregistrează proba demo înainte să continui."},
+ {type:"choice",prompt:"Vrei să verifici răspunsul. Ce spui?",choices:["Este corect?","Am nevoie de ajutor.","Repetați, vă rog."],correct:"Este corect?",ok:"Corect. Ai ales formula de verificare.",bad:"Caută întrebarea prin care verifici răspunsul."},
+ {type:"choice",prompt:"Mini-check: alege formula potrivită.",scenario:"Nu ai auzit bine ultima propoziție.",choices:["Repetați, vă rog.","Am terminat.","Unde scriu?"],correct:"Repetați, vă rog.",ok:"Checkpoint trecut. Lecția este completă.",bad:"Vrei să auzi informația încă o dată."}
+];
+let i=0,xp=Number(localStorage.rpmXp||0),activeSeconds=Number(localStorage.rpmActive||0),selected=null,arranged=[],spoken=false,lastInteraction=Date.now();
+const home=document.getElementById("home"),lesson=document.getElementById("lesson");
+function fmt(s){return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0")}
+function touch(){lastInteraction=Date.now()}
+["click","keydown","touchstart"].forEach(e=>document.addEventListener(e,touch,{passive:true}));
+setInterval(()=>{if(!lesson.classList.contains("hidden")&&document.visibilityState==="visible"&&Date.now()-lastInteraction<30000){activeSeconds++;localStorage.rpmActive=activeSeconds;refreshStats()}},1000);
+function refreshStats(){
+ document.getElementById("xp").textContent=xp;document.getElementById("active").textContent=fmt(activeSeconds);document.getElementById("weekly").textContent=Math.floor(activeSeconds/60)+"m";
+ document.getElementById("homeXp").textContent=xp;document.getElementById("homeActive").textContent=Math.floor(activeSeconds/60)+"m";document.getElementById("homeProgress").textContent=Math.round(i/items.length*100)+"%";
+}
+function speak(t){if("speechSynthesis"in window){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang="ro-RO";u.rate=.85;speechSynthesis.speak(u)}}
+function renderWords(){
+ const a=document.getElementById("answerZone");a.innerHTML=arranged.length?arranged.map((w,n)=>'<button class="word" data-remove="'+n+'">'+w+'</button>').join(""):"Atinge cuvintele în ordine";
+ const rem=items[i].words.slice();arranged.forEach(w=>{const k=rem.indexOf(w);if(k>=0)rem.splice(k,1)});
+ document.getElementById("wordBank").innerHTML=rem.map(w=>'<button class="word" data-word="'+w+'">'+w+'</button>').join("");
+ document.querySelectorAll("[data-word]").forEach(b=>b.onclick=()=>{arranged.push(b.dataset.word);renderWords()});
+ document.querySelectorAll("[data-remove]").forEach(b=>b.onclick=()=>{arranged.splice(Number(b.dataset.remove),1);renderWords()});
+}
+function render(){
+ selected=null;arranged=[];spoken=false;
+ const item=items[i],root=document.getElementById("exercise"),fb=document.getElementById("feedback");
+ document.getElementById("bar").style.width=(i/items.length*100)+"%";document.getElementById("step").textContent=(i+1)+"/"+items.length;fb.className="feedback";fb.textContent="";
+ document.getElementById("checkBtn").classList.remove("hidden");document.getElementById("nextBtn").classList.add("hidden");
+ let h='<div class="prompt">'+item.prompt+'</div>';
+ if(item.scenario)h+='<div class="scenario">'+item.scenario+'</div>';
+ if(item.audio)h+='<button id="audioBtn" class="audio">🔊 Ascultă</button>';
+ if(item.type==="order")h+='<div id="answerZone" class="answerZone"></div><div id="wordBank" class="words"></div>';
+ else if(item.type==="speak")h+='<div class="speak"><button id="recordBtn" class="audio">🎙 Înregistrează proba (demo)</button><div id="recordStatus" class="note">Nicio probă încă.</div><div class="review">Profesor: VALID / RETRY / NEEDS_SUPPORT — validarea este umană.</div></div>';
+ else h+='<div class="options">'+item.choices.map(c=>'<button class="option" data-choice="'+c.replaceAll('"',"&quot;")+'">'+c+'</button>').join("")+'</div>';
+ root.innerHTML=h;
+ if(item.audio)document.getElementById("audioBtn").onclick=()=>speak(item.audio);
+ if(item.type==="order")renderWords();
+ document.querySelectorAll("[data-choice]").forEach(b=>b.onclick=()=>{document.querySelectorAll("[data-choice]").forEach(x=>x.classList.remove("selected"));b.classList.add("selected");selected=b.dataset.choice});
+ if(item.type==="speak")document.getElementById("recordBtn").onclick=()=>{spoken=true;document.getElementById("recordStatus").textContent="Probă demo înregistrată · așteaptă validarea profesorului"};
+ refreshStats();
+}
+function check(){
+ const item=items[i];let ok=item.type==="order"?JSON.stringify(arranged)===JSON.stringify(item.correct):item.type==="speak"?spoken:selected===item.correct;
+ const fb=document.getElementById("feedback");fb.textContent=ok?item.ok:item.bad;fb.className="feedback "+(ok?"ok":"bad");
+ if(ok){xp+=10;localStorage.rpmXp=xp;document.getElementById("checkBtn").classList.add("hidden");document.getElementById("nextBtn").classList.remove("hidden");refreshStats()}
+}
+document.getElementById("startBtn").onclick=()=>{home.classList.add("hidden");lesson.classList.remove("hidden");render()};
+document.getElementById("homeBtn").onclick=()=>{lesson.classList.add("hidden");home.classList.remove("hidden");refreshStats()};
+document.getElementById("checkBtn").onclick=check;
+document.getElementById("nextBtn").onclick=()=>{if(i<items.length-1){i++;render()}else{document.getElementById("bar").style.width="100%";document.getElementById("step").textContent="8/8";document.getElementById("exercise").innerHTML='<div class="complete"><div class="big">🎉</div><h2>Bravo!</h2><p>Ai terminat lecția demo.</p><div class="scenario">În produsul final, parcursul și proba orală vor fi validate separat de profesor.</div></div>';document.getElementById("feedback").className="feedback";document.getElementById("checkBtn").classList.add("hidden");document.getElementById("nextBtn").classList.add("hidden");i=items.length;refreshStats()}};
+refreshStats();
+if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));
+</script>
+</body>
+</html>
