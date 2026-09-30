@@ -2,9 +2,11 @@ RPM-S2B v2.4 canonical promotion staging
 fingerprint=f1b12ee3fec0a738b3dc9f17e82da2250769b3e5ff5fd9a3a35026e19db2987d
 package_sha256=7999278085e246133f5012be41fb710e317c051e9345f4ad19b246e59bb83d36
 status=STAGING_FAIL_CLOSED_RUNTIME_GATE_OPEN
-repository_inventory=28/43
-remaining_exact_files=15
-last_verified_utc=2026-09-30T17:41:00Z
+repository_inventory=32/43
+remaining_exact_files=11
+last_verified_utc=2026-09-30T18:13:37Z
+last_promotion_commit=15c63c6ca0d2ed8183d514599d93a4b693d369e8
+integrated_exact_files=icon-192.png,build-fingerprint.mjs,s2-time-attribution-tests.mjs,s2-audio-lifecycle-integrity-tests.mjs
 production_release=false
 real_data=false
 legal_claims=false
