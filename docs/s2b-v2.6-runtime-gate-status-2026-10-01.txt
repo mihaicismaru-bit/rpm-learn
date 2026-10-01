@@ -1,0 +1,34 @@
+RPM LEARN — S2B v2.6 RUNTIME GATE STATUS
+Date: 2026-10-01
+
+SOURCE/PACKAGE
+- Candidate branch: hardening/s2b-v2.6-browser-runtime-fix
+- Source/package QA: PASS
+- Source checksum: 42/42
+- Fingerprint: 39/39
+- Combined fingerprint: 285a7fd70c1d92b4731d4663af95ec48b1fe02c322ad686ff7d4c3d66aeaffc0
+- Production main: unchanged; no promotion credited.
+
+TEST PUBLICATION
+- gh-pages is TEST / NOT PRODUCTION only.
+- gh-pages is byte-history identical to exact TEST commit eff96046799e1c42b340773160b236d54864799f (0 ahead / 0 behind).
+- v2.6 TEST path: /s2b-v26/
+- This publication does not make preview bytes canonical.
+
+REAL-BROWSER GATE
+- Runtime acceptance remains OPEN / FAIL-CLOSED.
+- Opera connector responded during this run, but there was no current browser window.
+- Navigation to https://mihaicismaru-bit.github.io/rpm-learn/s2b-v26/browser-acceptance.html could not execute because the browser runtime returned "No current window".
+- No pre-offline PASS, service-worker/offline PASS, promotion PASS, or S3 OPEN is claimed.
+
+BOUNDARIES
+- RPM-UX-BASELINE-LOCK-01 preserved.
+- Final Romanian voice quality DEFERRED.
+- AM22N remains read-only/adult-only: RLS-07 first; RLS-08/RLS-09 only when gates permit.
+- Learning Engine != Compliance Engine.
+- XP, gamification and screen time do not become validated learning time automatically.
+- Speaking/final-path/certificate/legal validity remain human/legal gated.
+- Production, real learner/employer data, legal claims and real certificates remain OFF.
+
+NEXT EXACT ACTION
+Open/attach a standards-browser window to the connected Opera runtime, execute the exact v2.6 TEST browser-acceptance harness, require pre-offline PASS, then execute service-worker/offline acceptance on the same exact build. Promote to main only after both runtime gates PASS; S3 opens only after exact-build runtime PASS.
