@@ -1,0 +1,19 @@
+name: S2B v2.5 QA
+on:
+  push:
+    branches:
+      - hardening/s2b-v2.5-package-contract
+permissions:
+  contents: read
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node tools/s2b-package-gate-v2-tests.mjs
+      - run: node tools/s2b-package-gate-v2.mjs --source-root canonical/s2b/v2.5 --sums packaging/s2b/v2.5/SHA256SUMS.txt --fingerprint canonical/s2b/v2.5/RPM_S2B_BUILD_FINGERPRINT.json
+      - run: cd canonical/s2b/v2.5 && node tests.mjs && node s2-tests.mjs && node pwa-contract-tests.mjs && node pwa-dependency-closure-tests.mjs && node acceptance-contract-tests.mjs && node browser-acceptance-static-tests.mjs && node s2-content-contract-tests.mjs && node s2-identity-scope-tests.mjs && node s2-role-bound-event-tests.mjs && node s2-time-integrity-tests.mjs && node s2-time-attribution-tests.mjs && node s2-time-source-link-tests.mjs && node s2-time-idle-retrocredit-tests.mjs && node s2-audio-lifecycle-integrity-tests.mjs && node s2-sequence-integrity-tests.mjs && node s2-sequence-allocation-tests.mjs && node s2-sequence-chain-quarantine-tests.mjs && node s2-speaking-review-gate-tests.mjs && node s2-event-semantic-integrity-tests.mjs && node s2-event-path-integrity-tests.mjs && node build-fingerprint-self-check.mjs
