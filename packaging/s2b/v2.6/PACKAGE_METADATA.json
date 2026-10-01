@@ -1,0 +1,55 @@
+{
+  "schema": "rpm-s2b-successor-package/v1",
+  "packageId": "RPM-S2B-PACKAGE-v2.6-candidate",
+  "status": "IDENTITY_BOUND_QA_PENDING",
+  "predecessorRuntimeBuild": "RPM-S2B-BROWSER-GATE-v2.5",
+  "predecessorFingerprint": "f1b12ee3fec0a738b3dc9f17e82da2250769b3e5ff5fd9a3a35026e19db2987d",
+  "sourceRoot": "canonical/s2b/v2.6",
+  "sourceTreeEntryCount": 42,
+  "sourceTreeClosure": "BYTE_EXACT_42_OF_42",
+  "sourceChecksumEntryCount": 42,
+  "sourceChecksumManifest": "packaging/s2b/v2.6/SHA256SUMS.txt",
+  "runtimeEvidenceInSourceChecksum": false,
+  "missingSourceArtifacts": [],
+  "exactIcon": {
+    "bytes": 7507,
+    "sha256": "81361b3985fd938ed7ed35bb4fbd50cc2879a6ce523b83d80f92caa35cb33fa6",
+    "gitBlob": "c245479d8d0c03dffe1dbd58d1bdc0f16f006aed",
+    "repositoryPath": "canonical/s2b/v2.6/icon-512.png",
+    "readback": "PASS_REUSED_EXACT_BLOB"
+  },
+  "runtimeFix": {
+    "defect": "duplicate-time-attribution-blocked error-class mismatch",
+    "eventStoreGitBlob": "44c6d640b6d1fe9b99563208002ebe9817775c0b",
+    "behavior": "duplicate source attribution raises EventConflictError before semantic validation; replay remains fail-closed"
+  },
+  "buildIdentity": {
+    "buildId": "RPM-S2B-BROWSER-GATE-v2.6",
+    "fingerprintSchema": "rpm-s2b-build-fingerprint/v1",
+    "combinedSha256": "285a7fd70c1d92b4731d4663af95ec48b1fe02c322ad686ff7d4c3d66aeaffc0",
+    "fingerprintFiles": 39,
+    "identityCommit": "9f5b504596c4a33cc3004f62c86af67c75fc91bc"
+  },
+  "deterministicStaticQa": {
+    "status": "PENDING_FRESH_EXECUTION",
+    "workflow": "S2B v2.6 QA"
+  },
+  "packageGateV2": {
+    "status": "PENDING_FRESH_EXECUTION",
+    "toolPath": "tools/s2b-package-gate-v2.mjs",
+    "testsPath": "tools/s2b-package-gate-v2-tests.mjs"
+  },
+  "promotionAllowed": false,
+  "runtimeBrowserAcceptance": "OPEN_FAIL_CLOSED",
+  "s3Open": false,
+  "boundaries": {
+    "uxBaselineLock": "RPM-UX-BASELINE-LOCK-01",
+    "finalRomanianVoice": "DEFERRED",
+    "am22n": "READ_ONLY_ADULT_ONLY",
+    "learningEngineSeparateFromComplianceEngine": true,
+    "production": false,
+    "realData": false,
+    "legalClaims": false,
+    "certificates": false
+  }
+}

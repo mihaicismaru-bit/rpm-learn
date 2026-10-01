@@ -1,7 +1,9 @@
 RPM LEARN S2B v2.6 runtime-fix candidate
-Status: PRE-FINGERPRINT / NOT PROMOTABLE / S3 CLOSED
+Status: IDENTITY_BOUND / QA_PENDING / NOT PROMOTABLE / S3 CLOSED
 Base exact source: b09a054bf15b042e92156fb731105a8ef1664849
+Identity commit: 9f5b504596c4a33cc3004f62c86af67c75fc91bc
+Build ID: RPM-S2B-BROWSER-GATE-v2.6
+Combined fingerprint: 285a7fd70c1d92b4731d4663af95ec48b1fe02c322ad686ff7d4c3d66aeaffc0
 Real-browser v2.5 TEST failure: duplicate-time-attribution-blocked.
-Observed behavior: duplicate TIME_SLICE is correctly rejected by semantic validation with code TIME_SLICE_SOURCE_ALREADY_ATTRIBUTED, but browser acceptance expects EventConflictError from EventStore.
 Candidate fix: perform the existing duplicate source-attribution store-state conflict check before semantic validation during append. Replay semantic fail-closed remains unchanged.
 No production, real data, legal claims or certificates enabled.
