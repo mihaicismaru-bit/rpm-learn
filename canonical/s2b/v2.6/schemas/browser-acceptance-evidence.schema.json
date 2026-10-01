@@ -1,34 +1,71 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "rpm-s2b-browser-evidence/v1",
+  "$id": "rpm-s2b-browser-evidence/v3",
   "title": "RPM LEARN S2B Browser Acceptance Evidence",
   "type": "object",
-  "required": ["schemaVersion", "checkpoint", "status", "phase", "classification", "startedAt", "finishedAt", "origin", "message", "assertions", "boundaries"],
+  "required": [
+    "schemaVersion",
+    "checkpoint",
+    "status",
+    "phase",
+    "classification",
+    "startedAt",
+    "finishedAt",
+    "browser",
+    "build",
+    "chromeExecutable",
+    "origin",
+    "executionMode",
+    "message",
+    "assertions",
+    "boundaries"
+  ],
   "properties": {
-    "schemaVersion": {"const": "rpm-s2b-browser-evidence/v1"},
-    "checkpoint": {"const": "RPM-S2B"},
-    "status": {"enum": ["PASS", "BLOCKED", "FAIL"]},
-    "phase": {"type": "string", "minLength": 1},
-    "classification": {"type": "string", "minLength": 1},
-    "startedAt": {"type": "string", "format": "date-time"},
-    "finishedAt": {"type": "string", "format": "date-time"},
-    "browser": {"type": ["string", "null"]},
-    "chromeExecutable": {"type": "string"},
-    "origin": {"type": "string"},
-    "message": {"type": "string"},
-    "assertions": {"type": "array", "items": {"type": "string"}},
+    "schemaVersion": { "const": "rpm-s2b-browser-evidence/v3" },
+    "checkpoint": { "const": "RPM-S2B" },
+    "status": { "enum": ["PASS", "BLOCKED", "FAIL"] },
+    "phase": { "type": "string", "minLength": 1 },
+    "classification": { "type": "string", "minLength": 1 },
+    "startedAt": { "type": "string", "format": "date-time" },
+    "finishedAt": { "type": "string", "format": "date-time" },
+    "browser": { "type": ["string", "null"] },
+    "build": {
+      "type": "object",
+      "required": ["id", "combinedSha256", "fingerprintSchema"],
+      "properties": {
+        "id": { "const": "RPM-S2B-BROWSER-GATE-v2.6.1" },
+        "combinedSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "fingerprintSchema": { "const": "rpm-s2b-build-fingerprint/v1" }
+      },
+      "additionalProperties": false
+    },
+    "chromeExecutable": { "type": ["string", "null"] },
+    "origin": { "type": "string", "format": "uri" },
+    "executionMode": {
+      "type": "object",
+      "required": ["serveLocal", "launchBrowser", "cdpEndpoint", "originMode"],
+      "properties": {
+        "serveLocal": { "type": "boolean" },
+        "launchBrowser": { "type": "boolean" },
+        "cdpEndpoint": { "type": "string", "format": "uri" },
+        "originMode": { "enum": ["EXTERNAL_ORIGIN", "LOCAL_ORIGIN"] }
+      },
+      "additionalProperties": false
+    },
+    "message": { "type": "string" },
+    "assertions": { "type": "array", "items": { "type": "string" } },
     "boundaries": {
       "type": "object",
       "required": ["productionRelease", "realUserData", "legalComplianceClaims", "certificateIssuance", "learningEngineSeparateFromComplianceEngine"],
       "properties": {
-        "productionRelease": {"const": false},
-        "realUserData": {"const": false},
-        "legalComplianceClaims": {"const": false},
-        "certificateIssuance": {"const": false},
-        "learningEngineSeparateFromComplianceEngine": {"const": true}
+        "productionRelease": { "const": false },
+        "realUserData": { "const": false },
+        "legalComplianceClaims": { "const": false },
+        "certificateIssuance": { "const": false },
+        "learningEngineSeparateFromComplianceEngine": { "const": true }
       },
       "additionalProperties": false
     }
   },
-  "additionalProperties": true
+  "additionalProperties": false
 }
