@@ -3,6 +3,9 @@ on:
   push:
     branches:
       - hardening/s2b-v2.6-browser-runtime-fix
+  pull_request:
+    branches:
+      - hardening/s2b-v2.5-package-contract
 permissions:
   contents: read
 jobs:
