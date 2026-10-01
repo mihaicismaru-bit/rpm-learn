@@ -225,3 +225,10 @@ Build ID: `RPM-S2B-BROWSER-GATE-v2.3`. Service-worker cache: `rpm-learn-s2b-v18`
 v2.3 correctly introduced a shared evidence-claim contract, but the browser page stored machine check entries as display strings (`PASS <check>`) while `acceptance-contract.mjs` requires raw check names (`<check>`). A reachable standards-browser would therefore pass all in-page assertions and then fail closed in the runner at evidence-contract verification. v2.4 repairs the page/runner interface: the machine snapshot now stores raw check names only, the human-facing result adds the `PASS ` prefix only while rendering, and acceptance contract version advances to 2. Static QA explicitly rejects recurrence of display-prefixed machine evidence.
 
 Build ID: `RPM-S2B-BROWSER-GATE-v2.4`. Service-worker cache: `rpm-learn-s2b-v19`. Real browser runtime acceptance remains the gate for closing S2B; S3 remains closed.
+
+
+## S2B v2.6 — duplicate time-attribution runtime contract repair
+
+This successor candidate fixes the real-browser pre-offline failure observed on v2.5 at `duplicate-time-attribution-blocked`. `EventStore.append()` now raises the canonical store-state `EventConflictError` with code `TIME_SLICE_SOURCE_ALREADY_ATTRIBUTED` before semantic replay validation when a second `TIME_SLICE` targets an already-attributed source event. Replay remains fail-closed under semantic validation. No learning-time credit is widened or inferred, and `Learning Engine != Compliance Engine` remains unchanged.
+
+Build ID: `RPM-S2B-BROWSER-GATE-v2.6`. This build is not promotable until its regenerated fingerprint, corrected 42-entry source checksum manifest, deterministic/static QA, and real-browser acceptance all pass. S3 remains closed.

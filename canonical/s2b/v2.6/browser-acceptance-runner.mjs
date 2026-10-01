@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * RPM LEARN S2B fail-closed browser acceptance runner v2.4.
+ * RPM LEARN S2B fail-closed browser acceptance runner v2.6.
  * Development QA only. It never publishes, authenticates real users, or changes legal/compliance state.
  *
  * Local mode (default): starts a localhost static server and Chromium.
@@ -30,7 +30,7 @@ const children = [];
 let browserVersion = null;
 const startedAt = new Date().toISOString();
 const buildFingerprint = JSON.parse(readFileSync(new URL('./RPM_S2B_BUILD_FINGERPRINT.json', import.meta.url), 'utf8'));
-if (buildFingerprint?.schemaVersion !== 'rpm-s2b-build-fingerprint/v1' || !buildFingerprint?.combinedSha256 || buildFingerprint?.buildId !== 'RPM-S2B-BROWSER-GATE-v2.4') throw new Error('BUILD_FINGERPRINT_INVALID');
+if (buildFingerprint?.schemaVersion !== 'rpm-s2b-build-fingerprint/v1' || !buildFingerprint?.combinedSha256 || buildFingerprint?.buildId !== 'RPM-S2B-BROWSER-GATE-v2.6') throw new Error('BUILD_FINGERPRINT_INVALID');
 const BUILD_ROOT=path.dirname(fileURLToPath(import.meta.url));
 function verifyBuildFingerprint(){
   const names=Object.keys(buildFingerprint.files||{});
