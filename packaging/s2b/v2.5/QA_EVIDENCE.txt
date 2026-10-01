@@ -1,0 +1,10 @@
+RPM LEARN S2B v2.5 QA EVIDENCE
+Date: 2026-10-01
+Source root: canonical/s2b/v2.5
+Source checksum: PASS 42/42; zero mismatches; SHA-256 recomputed from repository bytes.
+Build fingerprint: PASS 39/39; combined fingerprint recomputed exact.
+icon-512.png: PASS exact readback, 7,507 bytes, canonical source identity.
+Deterministic/static: predecessor exact-package evidence PASS and source bytes are identical; fresh executable run NOT CLAIMED because the runner write path was blocked before mutation.
+Runtime browser acceptance: OPEN / FAIL-CLOSED.
+main promoted: no.
+S3 open: no.
