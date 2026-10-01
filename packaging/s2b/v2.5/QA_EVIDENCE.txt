@@ -4,7 +4,13 @@ Source root: canonical/s2b/v2.5
 Source checksum: PASS 42/42; zero mismatches; SHA-256 recomputed from repository bytes.
 Build fingerprint: PASS 39/39; combined fingerprint recomputed exact.
 icon-512.png: PASS exact readback, 7,507 bytes, canonical source identity.
-Deterministic/static: predecessor exact-package evidence PASS and source bytes are identical; fresh executable run NOT CLAIMED because the runner write path was blocked before mutation.
+Fresh executable deterministic/static QA: PASS.
+GitHub Actions workflow: S2B v2.5 QA.
+Workflow run: 36873101548.
+Validated head SHA: e3ca0a38b687e935d391614c2f12b6d5ff0296e9.
+Package-gate regression step: PASS.
+Exact v2.5 package-gate step: PASS.
+Full deterministic/static suite step: PASS.
 Runtime browser acceptance: OPEN / FAIL-CLOSED.
 main promoted: no.
 S3 open: no.
