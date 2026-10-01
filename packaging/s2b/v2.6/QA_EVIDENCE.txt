@@ -1,0 +1,18 @@
+RPM LEARN S2B v2.6 QA EVIDENCE
+Date: 2026-10-01
+Validated head: 42acee2ea667f1c35d754143d7f83901d721a6cc
+Workflow: S2B v2.6 QA
+Workflow run: 36887465520
+Workflow job: 110454319053
+Result: SUCCESS
+Package-gate v2 regression: PASS
+Exact package gate: PASS
+Source checksum closure: PASS 42/42; missing=0; mismatches=0.
+Fingerprint: PASS 39/39.
+Combined fingerprint expected/actual: 285a7fd70c1d92b4731d4663af95ec48b1fe02c322ad686ff7d4c3d66aeaffc0
+Runtime evidence entries in source checksum: 0.
+Full deterministic/static suite: PASS.
+Real-browser acceptance: OPEN / FAIL-CLOSED.
+gh-pages exact v2.6 publication: BLOCKED at ref update by connector safety guard; detached TEST commit eff96046799e1c42b340773160b236d54864799f exists but is not served by gh-pages.
+main promoted: no.
+S3 open: no.

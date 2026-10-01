@@ -1,7 +1,7 @@
 {
   "schema": "rpm-s2b-successor-package/v1",
   "packageId": "RPM-S2B-PACKAGE-v2.6-candidate",
-  "status": "IDENTITY_BOUND_QA_PENDING",
+  "status": "SOURCE_QA_PASS_RUNTIME_OPEN",
   "predecessorRuntimeBuild": "RPM-S2B-BROWSER-GATE-v2.5",
   "predecessorFingerprint": "f1b12ee3fec0a738b3dc9f17e82da2250769b3e5ff5fd9a3a35026e19db2987d",
   "sourceRoot": "canonical/s2b/v2.6",
@@ -31,11 +31,24 @@
     "identityCommit": "9f5b504596c4a33cc3004f62c86af67c75fc91bc"
   },
   "deterministicStaticQa": {
-    "status": "PENDING_FRESH_EXECUTION",
-    "workflow": "S2B v2.6 QA"
+    "status": "PASS",
+    "freshExecutableRun": "PASS",
+    "workflow": "S2B v2.6 QA",
+    "workflowRunId": 36887465520,
+    "workflowJobId": 110454319053,
+    "validatedHead": "42acee2ea667f1c35d754143d7f83901d721a6cc",
+    "packageGateRegression": "PASS",
+    "packageGateExactSource": "PASS",
+    "fullDeterministicStaticSuite": "PASS"
   },
   "packageGateV2": {
-    "status": "PENDING_FRESH_EXECUTION",
+    "status": "PASS",
+    "scope": "PASS",
+    "checksumClosure": "PASS_42_OF_42",
+    "fingerprint": "PASS_39_OF_39",
+    "combinedSha256": "285a7fd70c1d92b4731d4663af95ec48b1fe02c322ad686ff7d4c3d66aeaffc0",
+    "runtimeEvidenceEntries": 0,
+    "successorRequired": false,
     "toolPath": "tools/s2b-package-gate-v2.mjs",
     "testsPath": "tools/s2b-package-gate-v2-tests.mjs"
   },
@@ -51,5 +64,6 @@
     "realData": false,
     "legalClaims": false,
     "certificates": false
-  }
+  },
+  "promotionReason": "Source/package QA PASS; exact-build real-browser acceptance remains required and open."
 }
