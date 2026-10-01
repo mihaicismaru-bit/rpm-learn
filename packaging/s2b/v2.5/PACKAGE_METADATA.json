@@ -1,7 +1,7 @@
 {
   "schema": "rpm-s2b-successor-package/v1",
   "packageId": "RPM-S2B-PACKAGE-v2.5-candidate",
-  "status": "FAIL_CLOSED",
+  "status": "SOURCE_QA_PASS_RUNTIME_OPEN",
   "predecessorRuntimeBuild": "RPM-S2B-BROWSER-GATE-v2.4",
   "predecessorFingerprint": "f1b12ee3fec0a738b3dc9f17e82da2250769b3e5ff5fd9a3a35026e19db2987d",
   "sourceRoot": "canonical/s2b/v2.5",
@@ -33,15 +33,19 @@
     "fingerprintFilesVerified": 39,
     "fingerprintCombined": "f1b12ee3fec0a738b3dc9f17e82da2250769b3e5ff5fd9a3a35026e19db2987d",
     "evidencePath": "packaging/s2b/v2.5/QA_EVIDENCE.txt",
-    "evidenceBlob": "ad2c04e7a0dfe31c793ef3cc854c5ba78d02240b"
+    "evidenceBlob": "cf7d2f1b65a2f7640cf475b367909045d2bc514e"
   },
   "deterministicStaticQa": {
     "validatedExactPackageEvidence": "PASS",
     "sourceByteIdentity": "PASS",
-    "freshExecutableRun": "OPEN"
+    "freshExecutableRun": "PASS",
+    "workflow": "S2B v2.5 QA",
+    "workflowRunId": 36873101548,
+    "validatedHead": "e3ca0a38b687e935d391614c2f12b6d5ff0296e9"
   },
   "packageGateV2": {
     "localRegression": "PASS",
+    "freshExecutableRun": "PASS",
     "repositoryPersistence": "PERSISTED_READBACK",
     "repositoryToolPath": "tools/s2b-package-gate-v2.mjs",
     "repositoryToolBlob": "0e77361816329e9e11e4a99582780be608484e61",
@@ -50,6 +54,7 @@
   },
   "runtimeEvidencePolicy": "external-bind-to-exact-build",
   "successorReason": "v2.4 source checksum scope included historical runtime browser evidence; authoritative sidecar not recovered",
-  "promotionAllowed": false,
+  "promotionAllowed": true,
+  "runtimeBrowserAcceptance": "OPEN_FAIL_CLOSED",
   "s3Open": false
 }
