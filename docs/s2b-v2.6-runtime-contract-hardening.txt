@@ -1,0 +1,9 @@
+RPM LEARN S2B v2.6 runtime-contract hardening
+
+Purpose: preserve the browser-found duplicate-time-attribution error-class contract without changing canonical v2.6 package bytes.
+
+Required invariant: EventStore.append must reject a second TIME_SLICE for the same source as EventConflictError with code TIME_SLICE_SOURCE_ALREADY_ATTRIBUTED before validateEventSemantics can surface the same code as EventPolicyError.
+
+Replay semantics must remain fail-closed and continue to reject duplicate source attribution. scopeTimeSource remains unique per organisation + learner + TIME_SLICE + sourceEventId.
+
+This document is hardening provenance only. It does not change package identity, main, production state, compliance claims or certificates.
