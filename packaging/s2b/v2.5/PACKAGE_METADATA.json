@@ -4,17 +4,27 @@
   "status": "FAIL_CLOSED",
   "predecessorRuntimeBuild": "RPM-S2B-BROWSER-GATE-v2.4",
   "predecessorFingerprint": "f1b12ee3fec0a738b3dc9f17e82da2250769b3e5ff5fd9a3a35026e19db2987d",
+  "sourceRoot": "canonical/s2b/v2.5",
+  "sourceTreeEntryCount": 42,
+  "sourceTreeClosure": "BYTE_EXACT_42_OF_42",
   "sourceChecksumEntryCount": 42,
   "sourceChecksumManifest": "packaging/s2b/v2.5/SHA256SUMS.txt",
   "sourceChecksumManifestBlob": "8297816f3cddcb1631a1f6397e4e61dc252707f9",
   "runtimeEvidenceInSourceChecksum": false,
-  "missingSourceArtifacts": [
-    "icon-512.png"
-  ],
-  "exactMissingIcon": {
+  "missingSourceArtifacts": [],
+  "exactIcon": {
     "bytes": 7507,
     "sha256": "81361b3985fd938ed7ed35bb4fbd50cc2879a6ce523b83d80f92caa35cb33fa6",
-    "gitBlob": "c245479d8d0c03dffe1dbd58d1bdc0f16f006aed"
+    "gitBlob": "c245479d8d0c03dffe1dbd58d1bdc0f16f006aed",
+    "repositoryPath": "canonical/s2b/v2.5/icon-512.png",
+    "transport": "BYTE_PRESERVING_BASE64_GIT_BLOB",
+    "readback": "PASS"
+  },
+  "sourceAssembly": {
+    "exactReusedGitBlobs": 41,
+    "exactRecoveredBinaryBlobs": 1,
+    "assemblyCommit": "743393f9702323a4c68ec5b4e3d3640c3202d1f0",
+    "iconClosureCommit": "1a7879af0f2542e3cbc99c1337a8caf24a106014"
   },
   "packageGateV2": {
     "localRegression": "PASS",
