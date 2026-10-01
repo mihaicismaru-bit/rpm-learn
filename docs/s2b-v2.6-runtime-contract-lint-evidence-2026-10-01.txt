@@ -1,0 +1,51 @@
+RPM LEARN — S2B v2.6 RUNTIME CONTRACT LINTER EVIDENCE
+Date: 2026-10-01
+Status: HARDENING PASS / RUNTIME BROWSER GATE STILL OPEN / S3 CLOSED
+
+AUTHORITY
+- Repository: mihaicismaru-bit/rpm-learn
+- Candidate: hardening/s2b-v2.6-browser-runtime-fix
+- Hardening branch: hardening/s2b-v2.6-runtime-contract-linter
+- Exact build ID: RPM-S2B-BROWSER-GATE-v2.6
+- Combined fingerprint: 285a7fd70c1d92b4731d4663af95ec48b1fe02c322ad686ff7d4c3d66aeaffc0
+
+MATERIAL DELTA
+A reusable fail-closed runtime-contract linter was added outside the fingerprint-bound canonical package:
+- tools/s2b-v26-runtime-contract-lint-v2.mjs
+- blob: 1bb5dff6b3d2f36bf1d80f5f295091cc0be5c8d3
+The earlier v1 prototype remains historical hardening provenance and is not the authoritative linter.
+
+CHECKS ON EXACT v2.6 REPOSITORY BYTES
+PASS 10/10:
+1. exact build ID
+2. exact combined fingerprint
+3. scopeTimeSource IndexedDB index remains unique
+4. duplicate TIME_SLICE source-attribution guard exists
+5. semantic validation exists
+6. duplicate store-state guard precedes semantic validation
+7. duplicate guard emits EventConflictError / TIME_SLICE_SOURCE_ALREADY_ATTRIBUTED
+8. replay semantic policy retains duplicate-source fail-closed code
+9. browser harness expects EventConflictError / TIME_SLICE_SOURCE_ALREADY_ATTRIBUTED
+10. browser harness retains duplicate-time-attribution-blocked assertion
+
+READBACK BLOB IDENTITIES
+- canonical/s2b/v2.6/event-store.mjs: 44c6d640b6d1fe9b99563208002ebe9817775c0b
+- canonical/s2b/v2.6/browser-acceptance.html: 75731d06bf3738710076ff27005746c643195cd1
+- canonical/s2b/v2.6/model.mjs: 784283d018ae4d49d6115720d741d176e28caa2e
+- canonical/s2b/v2.6/RPM_S2B_BUILD_FINGERPRINT.json: 2ab7498b3472bb345f2bfc4b0d533e9f4f02b7ef
+- linter v2 Node syntax check: PASS
+
+BRANCH ISOLATION
+hardening/s2b-v2.6-runtime-contract-linter is 4 commits ahead / 0 behind the validated v2.6 candidate and changes only two provenance docs plus two linter tools. Canonical v2.6 package bytes are unchanged.
+
+LIMITATION
+A GitHub Actions workflow for the linter was attempted but the workflow-file write was blocked before mutation by connector safety. Therefore this linter is persisted and read back, but is not yet a required GitHub status check.
+
+BOUNDARIES
+RPM-UX-BASELINE-LOCK-01 preserved. Final Romanian voice remains deferred. AM22N remains read-only/adult-only. Learning Engine != Compliance Engine. No production, real learner/employer data, legal claim or certificate activation.
+
+BLOCKER
+Opera Browser Connector is currently not connected. No real-browser pre-offline or offline PASS is claimed.
+
+NEXT EXACT ACTION
+When a standards-browser connection is available, execute browser-acceptance.html against exact TEST commit eff96046799e1c42b340773160b236d54864799f, require pre-offline PASS, then service-worker/offline PASS on the same build. Only then promote v2.6 to main and open S3.
