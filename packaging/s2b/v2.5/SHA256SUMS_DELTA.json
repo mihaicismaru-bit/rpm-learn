@@ -1,0 +1,20 @@
+{
+  "schema": "rpm-s2b-sha256sum-scope-delta/v1",
+  "predecessor": "canonical/s2b/v2.4/SHA256SUMS.txt",
+  "predecessorBlob": "60dab959e1aea7eb9e235bcb8e11357441c4a09c",
+  "removeEntries": [
+    {
+      "path": "RPM_S2B_BROWSER_ACCEPTANCE_EVIDENCE_v23_RERUN.json",
+      "sha256": "a27d29ca0c767f97a4b65a571a3f67561b8d64b2c340809f25e92984dd382f32",
+      "reason": "runtime evidence is external to source-package checksum scope"
+    }
+  ],
+  "preserveOtherEntriesByteExact": true,
+  "expectedSourceEntryCount": 42,
+  "knownMissingSourceArtifact": {
+    "path": "icon-512.png",
+    "sha256": "81361b3985fd938ed7ed35bb4fbd50cc2879a6ce523b83d80f92caa35cb33fa6",
+    "gitBlob": "c245479d8d0c03dffe1dbd58d1bdc0f16f006aed"
+  },
+  "status": "CANDIDATE_FAIL_CLOSED_UNTIL_ICON_PRESENT"
+}
