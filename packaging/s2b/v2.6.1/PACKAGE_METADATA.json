@@ -1,0 +1,33 @@
+{
+  "schema": "rpm-s2b-successor-package/v1",
+  "packageId": "RPM-S2B-PACKAGE-v2.6.1-candidate",
+  "status": "EVIDENCE_SCHEMA_REPAIRED_PRE_FINGERPRINT",
+  "predecessorRuntimeBuild": "RPM-S2B-BROWSER-GATE-v2.6",
+  "predecessorFingerprint": "285a7fd70c1d92b4731d4663af95ec48b1fe02c322ad686ff7d4c3d66aeaffc0",
+  "sourceRoot": "canonical/s2b/v2.6",
+  "branchOverlay": "hardening/s2b-v2.6.1-evidence-schema-contract",
+  "evidenceContract": {
+    "schemaVersion": "rpm-s2b-browser-evidence/v3",
+    "buildId": "RPM-S2B-BROWSER-GATE-v2.6.1",
+    "buildIdentityRequired": true,
+    "executionModeRequired": true,
+    "chromeExecutableNullable": true,
+    "topLevelAdditionalProperties": false
+  },
+  "fingerprint": "PENDING_REGENERATION",
+  "sourceChecksums": "PENDING_REGENERATION",
+  "deterministicStaticQa": "PENDING",
+  "runtimeBrowserAcceptance": "BLOCKED_UNTIL_FINGERPRINT_AND_QA_PASS",
+  "promotionAllowed": false,
+  "s3Open": false,
+  "boundaries": {
+    "uxBaselineLock": "RPM-UX-BASELINE-LOCK-01",
+    "finalRomanianVoice": "DEFERRED",
+    "am22n": "READ_ONLY_ADULT_ONLY",
+    "learningEngineSeparateFromComplianceEngine": true,
+    "production": false,
+    "realData": false,
+    "legalClaims": false,
+    "certificates": false
+  }
+}
