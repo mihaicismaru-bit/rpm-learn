@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rpm-learn.local/schemas/lesson.schema.json",
+  "title": "RPM LEARN Adult LessonContent v1",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["lessonId","contentVersion","source","title","outcome","items"],
+  "properties": {
+    "lessonId": {"type":"string","minLength":1},
+    "contentVersion": {"type":"string","minLength":1},
+    "title": {"type":"string","minLength":1},
+    "outcome": {"type":"string","minLength":1},
+    "source": {
+      "type":"object",
+      "required":["lane","audience","level","artifactIds","sourceObserved"],
+      "properties": {
+        "lane":{"enum":["RLS-07","RLS-08","RLS-09"]},
+        "audience":{"const":"16+"},
+        "level":{"enum":["preA1","A1","A2"]},
+        "artifactIds":{"type":"array","minItems":1,"uniqueItems":true,"items":{"type":"string","minLength":1}},
+        "sourceObserved":{"type":"string","pattern":"^\\d{4}-\\d{2}-\\d{2}$"}
+      }
+    },
+    "items": {
+      "type":"array","minItems":1,
+      "items": {
+        "type":"object",
+        "required":["id","type","skill","difficulty","prompt","evidenceClass"],
+        "properties": {
+          "id":{"type":"string","minLength":1},
+          "type":{"enum":["listen_choose","scenario_choose","order_words","listen_repeat","read_choose","checkpoint"]},
+          "skill":{"type":"string","minLength":1},
+          "difficulty":{"type":"integer","minimum":1},
+          "prompt":{"type":"string","minLength":1},
+          "teacherReviewRequired":{"type":"boolean"},
+          "evidenceClass":{"type":"string","minLength":1}
+        }
+      }
+    }
+  }
+}

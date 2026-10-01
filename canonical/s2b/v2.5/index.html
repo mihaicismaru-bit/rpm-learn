@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<link rel="manifest" href="./manifest.webmanifest">
+<title>RPM LEARN — S2 Learner PWA Shell</title>
+<style>
+:root{font-family:system-ui,-apple-system,Segoe UI,sans-serif}body{margin:0;background:#f6f7f9;color:#1d2430}.app{max-width:560px;margin:auto;min-height:100vh;background:white;padding:20px;box-sizing:border-box}.top{display:grid;gap:10px}.meta{display:flex;gap:12px;font-size:.9rem}progress{width:100%;height:14px}.card{margin-top:24px;padding:20px;border:1px solid #d9dde5;border-radius:18px;box-shadow:0 4px 16px rgba(0,0,0,.05)}.choice{width:100%;padding:14px;margin:7px 0;border:1px solid #bbc3cf;border-radius:12px;background:white;font-size:1rem;text-align:left}.choice:active,.choice[data-sel="1"]{transform:scale(.995);background:#eef2f7}.actions{display:flex;gap:10px;margin-top:16px}.secondary{padding:12px 14px;border:1px solid #bbc3cf;border-radius:12px;background:white}#feedback{min-height:28px;font-weight:600}#feedback[data-ok="1"]{font-weight:700}.picked{min-height:42px;padding:10px;border:1px dashed #aab3c0;border-radius:10px;margin-bottom:10px}.scenario{padding:10px 0;border-bottom:1px solid #eceff3}.small{font-size:.8rem;color:#667085;margin-top:20px}.role{display:inline-flex;width:max-content;padding:6px 9px;border-radius:999px;border:1px solid #d0d5dd;font-size:.72rem;font-weight:700;letter-spacing:.03em;background:#f8fafc}
+</style>
+</head>
+<body><main class="app">
+<div class="top"><span id="roleBadge" class="role">DEV ROLE</span><h1 id="lessonTitle">RPM LEARN</h1><progress id="progress" value="0" max="8"></progress><div class="meta"><span id="xp">XP 0</span><span id="time">Timp activ 0:00</span></div></div>
+<section class="card"><h2 id="prompt">Se încarcă…</h2><div class="actions"><button id="audioBtn" class="secondary" hidden>🔊 Ascultă</button></div><div id="exerciseBody"></div><p id="feedback"></p></section>
+<p class="small">Learning Engine · S2 development shell. Rolul este o simulare locală DEV, nu autentificare. Fără date reale, calcul juridic de conformitate sau certificate.</p>
+</main><script type="module" src="./app.mjs"></script></body></html>

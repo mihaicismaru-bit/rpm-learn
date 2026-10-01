@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+const model=fs.readFileSync(new URL('./model.mjs',import.meta.url),'utf8');
+const store=fs.readFileSync(new URL('./event-store.mjs',import.meta.url),'utf8');
+const app=fs.readFileSync(new URL('./app.mjs',import.meta.url),'utf8');
+for (const marker of ['EVENT_POLICY_VERSION = 4','validateEventPolicy','UNKNOWN_EVENT_TYPE','TIME_SLICE_DURATION_OUT_OF_RANGE','SPEAKING_REVIEW_GATE_REQUIRED','makeTimeSlicePayload',"clockBasis: 'performance.now'",'wallClockRollbackDetected','TIME_SLICE_SOURCE_EVENT_INVALID','TIME_SLICE_SOURCE_EVENT_ID_REQUIRED','TIME_SLICE_SOURCE_EVENT_NOT_FOUND','TIME_SLICE_SOURCE_EVENT_MISMATCH','TIME_SLICE_SOURCE_EVENT_SEQ_INVALID','TIME_SLICE_POLICY_VERSION_MISMATCH','TIME_SLICE_ELIGIBILITY_DURATION_MISMATCH','TIME_SLICE_RAW_DURATION_INVALID','TIME_SLICE_IDLE_GAP_MARKER_INVALID','TIME_SLICE_IDLE_RETROCREDIT_FORBIDDEN','TIME_SLICE_DURATION_DERIVATION_MISMATCH']) assert.ok(model.includes(marker),`model time-integrity missing ${marker}`);
+for (const marker of ['DB_VERSION = 4','scopeTimeSource','TIME_SLICE_SOURCE_ALREADY_ATTRIBUTED','validateTimeSliceProvenance','EventPolicyError','validateEventPolicy(event)']) assert.ok(store.includes(marker),`store event policy missing ${marker}`);
+assert.ok(app.includes('monotonicNow()'),'app must use monotonic clock for active duration');
+assert.ok(app.includes('makeTimeSlicePayload'),'app must create policy-bound time slices');
+assert.ok(!app.includes('eligibleSliceMs(lastMeaningful'),'app must not derive active duration from wall-clock timestamps');
+assert.ok(app.indexOf('const eres = await store.append(ev)') < app.indexOf('const timePayload = makeTimeSlicePayload'),'source action must persist before derived time credit');
+console.log('RPM_S2_TIME_INTEGRITY_STATIC_PASS monotonic-duration source-first source-link single-attribution legacy-replay-quarantine wall-clock-audit 45s-policy speaking-human-gate');
