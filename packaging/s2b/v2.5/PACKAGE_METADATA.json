@@ -26,16 +26,27 @@
     "assemblyCommit": "743393f9702323a4c68ec5b4e3d3640c3202d1f0",
     "iconClosureCommit": "1a7879af0f2542e3cbc99c1337a8caf24a106014"
   },
+  "sourceIntegrityQa": {
+    "status": "PASS",
+    "checksumEntriesVerified": 42,
+    "checksumMismatches": 0,
+    "fingerprintFilesVerified": 39,
+    "fingerprintCombined": "f1b12ee3fec0a738b3dc9f17e82da2250769b3e5ff5fd9a3a35026e19db2987d",
+    "evidencePath": "packaging/s2b/v2.5/QA_EVIDENCE.txt",
+    "evidenceBlob": "ad2c04e7a0dfe31c793ef3cc854c5ba78d02240b"
+  },
+  "deterministicStaticQa": {
+    "validatedExactPackageEvidence": "PASS",
+    "sourceByteIdentity": "PASS",
+    "freshExecutableRun": "OPEN"
+  },
   "packageGateV2": {
     "localRegression": "PASS",
-    "toolSha256": "19e70349507a7a32958b7ae97459af2032b4e2e8c64dcec625df2d15feee27a8",
-    "testsSha256": "fb2dacbf19b1861cba6dcd39fffbe53f9b89a5d9cb71dca3655e9f265891f5d3",
     "repositoryPersistence": "PERSISTED_READBACK",
     "repositoryToolPath": "tools/s2b-package-gate-v2.mjs",
     "repositoryToolBlob": "0e77361816329e9e11e4a99582780be608484e61",
     "repositoryTestsPath": "tools/s2b-package-gate-v2-tests.mjs",
-    "repositoryTestsBlob": "eed45f75d85737afb4bbc288237fa07b37ac2949",
-    "persistenceCommit": "fa62300e5023c3fe5e08ce73df698bb9dc23b8fb"
+    "repositoryTestsBlob": "eed45f75d85737afb4bbc288237fa07b37ac2949"
   },
   "runtimeEvidencePolicy": "external-bind-to-exact-build",
   "successorReason": "v2.4 source checksum scope included historical runtime browser evidence; authoritative sidecar not recovered",
