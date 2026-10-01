@@ -1,0 +1,16 @@
+{
+  "schema": "rpm-s2b-successor-package/v1",
+  "packageId": "RPM-S2B-PACKAGE-v2.5-candidate",
+  "status": "FAIL_CLOSED",
+  "predecessorRuntimeBuild": "RPM-S2B-BROWSER-GATE-v2.4",
+  "predecessorFingerprint": "f1b12ee3fec0a738b3dc9f17e82da2250769b3e5ff5fd9a3a35026e19db2987d",
+  "sourceChecksumEntryCount": 42,
+  "runtimeEvidenceInSourceChecksum": false,
+  "missingSourceArtifacts": [
+    "icon-512.png"
+  ],
+  "runtimeEvidencePolicy": "external-bind-to-exact-build",
+  "successorReason": "v2.4 source checksum scope included historical runtime browser evidence; authoritative sidecar not recovered",
+  "promotionAllowed": false,
+  "s3Open": false
+}
