@@ -130,7 +130,14 @@ export async function runHostedGate() {
     try {
       await runNode([runner], env);
     } catch (firstError) {
-      await sleep(750);
+      try {
+        const response = await fetch(`http://${HOSTED_GATE.cdpHost}:${HOSTED_GATE.cdpPort}/json`);
+        const targets = response.ok ? await response.json() : [];
+        console.log(`RPM_S2B_V261_POST_ABORT_TARGETS ${JSON.stringify(Array.isArray(targets) ? targets.map(t => ({type:t.type,url:t.url,title:t.title})) : [])}`);
+      } catch (diagnosticError) {
+        console.log(`RPM_S2B_V261_POST_ABORT_TARGETS_UNAVAILABLE ${diagnosticError?.message || diagnosticError}`);
+      }
+      await sleep(1250);
       await runNode([runner], env);
     }
     await runNode([gate, evidence], env);
