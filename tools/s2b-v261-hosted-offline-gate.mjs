@@ -75,6 +75,27 @@ async function waitForCdp(tries=100) {
   throw new Error(`CDP_UNAVAILABLE:${last?.message || 'timeout'}`);
 }
 
+async function waitForHostedBootstrap(tries=100) {
+  const url = `http://${HOSTED_GATE.cdpHost}:${HOSTED_GATE.cdpPort}/json`;
+  let lastTargets = [];
+  for (let i=0; i<tries; i++) {
+    try {
+      const response = await fetch(url);
+      if (response.ok) {
+        const targets = await response.json();
+        lastTargets = Array.isArray(targets) ? targets.map(t => ({ type:t.type, url:t.url })) : [];
+        const hosted = Array.isArray(targets) && targets.find(t => t.type === 'page' && String(t.url || '').startsWith(HOSTED_GATE.origin));
+        if (hosted) {
+          console.log(`RPM_S2B_V261_CHROME_BOOTSTRAP_PASS url=${hosted.url}`);
+          return hosted;
+        }
+      }
+    } catch {}
+    await sleep(100);
+  }
+  throw new Error(`CHROME_INITIAL_NAVIGATION_FAILED targets=${JSON.stringify(lastTargets)}`);
+}
+
 export async function runHostedGate() {
   const chrome = resolveChrome();
   await verifyHostedIdentity();
@@ -87,12 +108,15 @@ export async function runHostedGate() {
     '--disable-gpu',
     `--remote-debugging-port=${HOSTED_GATE.cdpPort}`,
     '--remote-allow-origins=*',
+    '--no-first-run',
+    '--no-default-browser-check',
     `--user-data-dir=${profile}`,
-    'about:blank'
+    `${HOSTED_GATE.origin}/index.html`
   ], { stdio: 'ignore' });
 
   try {
     await waitForCdp();
+    await waitForHostedBootstrap();
     await sleep(500);
     const env = {
       ...process.env,
