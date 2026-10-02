@@ -28,3 +28,5 @@ jobs:
         run: node canonical/s3/lesson-player/v0.1/session-controller-tests.mjs
       - name: S3.2 lesson runtime
         run: node canonical/s3/lesson-player/v0.1/lesson-runtime-tests.mjs
+      - name: S3.3 completion and recovery
+        run: node canonical/s3/lesson-player/v0.1/completion-recovery-tests.mjs
