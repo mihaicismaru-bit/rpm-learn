@@ -26,3 +26,5 @@ jobs:
         run: node canonical/s3/lesson-player/v0.1/lesson-player-engine-tests.mjs
       - name: S3.1 persisted session controller
         run: node canonical/s3/lesson-player/v0.1/session-controller-tests.mjs
+      - name: S3.2 lesson runtime
+        run: node canonical/s3/lesson-player/v0.1/lesson-runtime-tests.mjs
