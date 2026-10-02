@@ -14,7 +14,7 @@ import process from 'node:process';
 export const HOSTED_GATE = Object.freeze({
   origin: 'https://mihaicismaru-bit.github.io/rpm-learn/s2b-v26',
   buildId: 'RPM-S2B-BROWSER-GATE-v2.6.1',
-  combinedSha256: 'ea0cc17f8ef4935897eedaab632621327c2e5b7d78680e7241d59ab002efb8eb',
+  combinedSha256: 'ab0f271928aa195f1a22835d42a0e93afe791a30dd56e195c8f05609ef1780a5',
   fingerprintSchema: 'rpm-s2b-build-fingerprint/v1',
   evidenceFile: 'RPM_S2B_BROWSER_ACCEPTANCE_EVIDENCE.json',
   cdpHost: '127.0.0.1',
