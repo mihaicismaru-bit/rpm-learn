@@ -2,7 +2,7 @@ name: S3 Lesson Player v0.1 QA
 on:
   push:
     branches:
-      - s3/lesson-player-engine-v0.1
+      - s3/completion-recovery-v0.1-qa
   pull_request:
     branches:
       - main
