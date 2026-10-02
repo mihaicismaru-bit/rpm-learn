@@ -1,7 +1,7 @@
 {
   "schema": "rpm-s2b-successor-package/v1",
   "packageId": "RPM-S2B-PACKAGE-v2.6.1-candidate",
-  "status": "SOURCE_PACKAGE_QA_PASS_TEST_SYNCED_BROWSER_PENDING",
+  "status": "SOFT_RELOAD_CANDIDATE_PACKAGE_QA_PENDING",
   "predecessorRuntimeBuild": "RPM-S2B-BROWSER-GATE-v2.6",
   "predecessorFingerprint": "285a7fd70c1d92b4731d4663af95ec48b1fe02c322ad686ff7d4c3d66aeaffc0",
   "sourceRoot": "canonical/s2b/v2.6",
@@ -16,7 +16,7 @@
   },
   "fingerprint": {
     "buildId": "RPM-S2B-BROWSER-GATE-v2.6.1",
-    "combinedSha256": "b534ff27973a982282e5dda3f43680f6b79c0218eb0501bae1038594c2b82cae",
+    "combinedSha256": "ea0cc17f8ef4935897eedaab632621327c2e5b7d78680e7241d59ab002efb8eb",
     "fileCount": 39,
     "status": "PASS"
   },
@@ -30,7 +30,7 @@
     "runId": 36967043859,
     "headSha": "51ae13764fafbebbadb61a3e6d83a668d6adbaff"
   },
-  "runtimeBrowserAcceptance": "PENDING_STANDARDS_BROWSER_CONNECTION",
+  "runtimeBrowserAcceptance": "PENDING_SOFT_RELOAD_EXACT_TEST_SYNC",
   "promotionAllowed": false,
   "s3Open": false,
   "boundaries": {
