@@ -1,0 +1,49 @@
+RPM LEARN S2B v2.6.1 — HOSTED OFFLINE CI BRIDGE
+
+Purpose
+Close the only remaining S2B runtime gate without changing fingerprint-bound runtime bytes, main, production state, real user data, legal claims, or certificate state.
+
+Exact build
+Build ID: RPM-S2B-BROWSER-GATE-v2.6.1
+Combined SHA-256: b534ff27973a982282e5dda3f43680f6b79c0218eb0501bae1038594c2b82cae
+TEST origin: https://mihaicismaru-bit.github.io/rpm-learn/s2b-v26
+Expected evidence schema: rpm-s2b-browser-evidence/v3
+Required final phase: OFFLINE_RELOAD_COMPLETE
+Required final message: RPM_S2B_BROWSER_ACCEPTANCE_PASS
+
+Current validated state
+1. Package/deterministic/static QA is PASS for the exact successor.
+2. Real-browser PRE-OFFLINE acceptance is PASS on the exact hosted TEST build.
+3. Offline reload acceptance remains OPEN / fail-closed.
+4. tools/s2b-v261-hosted-offline-gate.mjs already performs hosted identity verification, launches standards Chromium, invokes the canonical browser acceptance runner, and validates the resulting evidence.
+5. tools/s2b-v261-browser-evidence-gate.mjs already rejects wrong build identity/hash, missing or duplicate assertions, local-origin substitution, legal-boundary violations, and undeclared evidence claims.
+6. The existing GitHub Actions successor QA lane already runs Node 22 on ubuntu-latest. A workflow mutation adding a new browser job was attempted but blocked before write by connector safety controls.
+
+Minimal bridge
+Reuse the already-authorized successor QA lane rather than widening workflow permissions. The existing evidence-schema-contract test entrypoint can invoke the hosted gate only when GITHUB_ACTIONS=true. Local executions remain network-free and deterministic. On CI success, the same test must read back the generated evidence, run validateBrowserEvidence on it, compute the evidence SHA-256, and print a single structured readback line containing:
+- buildId
+- combinedSha256
+- origin
+- browser
+- assertionCount
+- phase
+- status
+- classification
+- message
+- evidenceSha256
+
+Promotion rule
+No PRE-OFFLINE-only output is sufficient. Promotion remains forbidden unless the CI run contains:
+RPM_S2B_V261_HOSTED_OFFLINE_GATE_PASS
+and
+RPM_S2B_V261_HOSTED_EVIDENCE_READBACK_PASS
+with phase=OFFLINE_RELOAD_COMPLETE, status=PASS, classification=ACCEPTED, message=RPM_S2B_BROWSER_ACCEPTANCE_PASS, expected build ID/hash/origin, and the full exact assertion set including service-worker-control and offline-learner-shell-reload.
+
+Invariant
+Learning Engine != Compliance Engine.
+XP, gamification, and screen time do not automatically become validated learning time.
+Speaking/final-path/certificate/legal validity remain human/legal gated.
+External production release, real learner/employer data, legal compliance claims, and real certificates remain OFF.
+
+NEXT EXACT ACTION
+Apply the CI-only hosted-gate hook to the existing successor evidence-contract test entrypoint, allow the normal successor QA push run to execute it, read back logs/evidence identity, and only if the exact offline PASS is present promote the successor to main and open S3.

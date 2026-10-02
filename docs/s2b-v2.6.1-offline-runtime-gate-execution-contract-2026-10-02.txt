@@ -1,0 +1,61 @@
+RPM LEARN — S2B v2.6.1 OFFLINE RUNTIME GATE EXECUTION CONTRACT
+Date: 2026-10-02
+Status: HARDENING / FAIL-CLOSED / S3 CLOSED
+
+Purpose
+Define the exact standards-browser offline acceptance required before v2.6.1 can be promoted. This document does not alter fingerprint-bound runtime bytes, production, real learner/employer data, legal claims, or certificate state.
+
+Exact TEST identity
+- buildId: RPM-S2B-BROWSER-GATE-v2.6.1
+- combinedSha256: b534ff27973a982282e5dda3f43680f6b79c0218eb0501bae1038594c2b82cae
+- TEST origin: https://mihaicismaru-bit.github.io/rpm-learn/s2b-v26
+- TEST branch: gh-pages
+- TEST remains NOT PRODUCTION and is not canonical by recency.
+
+Required execution
+1. Run canonical/s2b/v2.6/browser-acceptance-runner.mjs against the exact hosted TEST origin.
+2. Use a standards Chromium browser with CDP Network.emulateNetworkConditions support.
+3. Require the runner's local fingerprint self-verification to pass before runtime navigation.
+4. Require pre-offline runtime status PASS_PRE_OFFLINE.
+5. Require service worker ready + controller after reload.
+6. Emulate network offline through CDP, reload the learner shell, and require the offline learner shell to remain functional.
+7. Restore network before teardown.
+
+Required PASS evidence
+- schemaVersion = rpm-s2b-browser-evidence/v3
+- checkpoint = RPM-S2B
+- status = PASS
+- phase = OFFLINE_RELOAD_COMPLETE
+- classification = ACCEPTED
+- message = RPM_S2B_BROWSER_ACCEPTANCE_PASS
+- build.id = RPM-S2B-BROWSER-GATE-v2.6.1
+- build.combinedSha256 = b534ff27973a982282e5dda3f43680f6b79c0218eb0501bae1038594c2b82cae
+- build.fingerprintSchema = rpm-s2b-build-fingerprint/v1
+- origin = https://mihaicismaru-bit.github.io/rpm-learn/s2b-v26
+- executionMode.originMode = EXTERNAL_ORIGIN
+- service-worker-control assertion present
+- offline-learner-shell-reload assertion present
+- all pre-offline claim assertions derived from acceptance-contract.mjs present exactly once
+- productionRelease = false
+- realUserData = false
+- legalComplianceClaims = false
+- certificateIssuance = false
+- learningEngineSeparateFromComplianceEngine = true
+
+Fail-closed rules
+- PRE_OFFLINE pass alone is insufficient.
+- Manual visual confirmation is insufficient.
+- navigator.onLine spoofing is insufficient.
+- Offline behavior without CDP/browser network disable is insufficient.
+- Evidence from a different build id, combined hash, origin, or schema is invalid.
+- Missing or duplicate assertions invalidate the evidence.
+- No promotion to main and no S3 opening until the exact evidence above is read back.
+
+Current execution blocker
+The connected Opera browser surface can execute the real page but exposes navigation/content only; it does not expose CDP Network.emulateNetworkConditions. The container runtime has Chromium but no outbound network access to the TEST origin. A prior attempt to extend executable CI/browser automation was blocked before repository mutation by connector safety controls. Therefore offline PASS is not claimed.
+
+Independent hardening completed by this contract
+The promotion gate is now explicitly bound to exact build identity, origin, evidence schema, service-worker control, offline reload, assertion completeness, and the Learning Engine != Compliance Engine boundary. This closes ambiguity about what evidence can authorize promotion.
+
+NEXT EXACT ACTION
+Execute the existing browser-acceptance-runner.mjs in a standards browser environment that has both outbound access to the exact TEST origin and CDP network-offline emulation. Read back evidence v3. Promote the exact successor to main only after PASS; only then open S3.

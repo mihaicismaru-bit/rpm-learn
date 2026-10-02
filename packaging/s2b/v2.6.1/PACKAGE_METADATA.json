@@ -1,0 +1,65 @@
+{
+  "schema": "rpm-s2b-successor-package/v1",
+  "packageId": "RPM-S2B-PACKAGE-v2.6.1",
+  "status": "S2B_V261_RUNTIME_ACCEPTED_PROMOTION_READY",
+  "predecessorRuntimeBuild": "RPM-S2B-BROWSER-GATE-v2.6",
+  "predecessorFingerprint": "285a7fd70c1d92b4731d4663af95ec48b1fe02c322ad686ff7d4c3d66aeaffc0",
+  "sourceRoot": "canonical/s2b/v2.6",
+  "branchOverlay": "hardening/s2b-v2.6.1-evidence-schema-contract",
+  "evidenceContract": {
+    "schemaVersion": "rpm-s2b-browser-evidence/v3",
+    "buildId": "RPM-S2B-BROWSER-GATE-v2.6.1",
+    "buildIdentityRequired": true,
+    "executionModeRequired": true,
+    "chromeExecutableNullable": true,
+    "topLevelAdditionalProperties": false
+  },
+  "fingerprint": {
+    "buildId": "RPM-S2B-BROWSER-GATE-v2.6.1",
+    "combinedSha256": "ab0f271928aa195f1a22835d42a0e93afe791a30dd56e195c8f05609ef1780a5",
+    "fileCount": 39,
+    "status": "PASS"
+  },
+  "sourceChecksums": {
+    "entries": 42,
+    "status": "PASS"
+  },
+  "deterministicStaticQa": {
+    "status": "PASS",
+    "workflow": "S2B v2.6.1 QA",
+    "runId": 37038693079,
+    "corroboratingRunId": 37038697746,
+    "headSha": "abc19a234051b87c235b2d28116fe240da23cd11"
+  },
+  "runtimeBrowserAcceptance": {
+    "status": "PASS",
+    "phase": "OFFLINE_RELOAD_COMPLETE",
+    "classification": "ACCEPTED",
+    "message": "RPM_S2B_BROWSER_ACCEPTANCE_PASS",
+    "evidenceSchema": "rpm-s2b-browser-evidence/v3",
+    "browser": "Chrome/154.0.8037.57",
+    "assertionCount": 31,
+    "workflowRunId": 37038693079,
+    "corroboratingWorkflowRunId": 37038697746,
+    "artifactId": 11240589335,
+    "artifactDigest": "sha256:a3fe9ed793bb5efe6f2192a1779045db0cf99f40a1812b202bbd2bde9cf90d36"
+  },
+  "promotionAllowed": true,
+  "s3Open": false,
+  "boundaries": {
+    "uxBaselineLock": "RPM-UX-BASELINE-LOCK-01",
+    "finalRomanianVoice": "DEFERRED",
+    "am22n": "READ_ONLY_ADULT_ONLY",
+    "learningEngineSeparateFromComplianceEngine": true,
+    "production": false,
+    "realData": false,
+    "legalClaims": false,
+    "certificates": false
+  },
+  "testPreview": {
+    "branch": "gh-pages",
+    "path": "s2b-v26",
+    "headSha": "42e81b603c37b2ff112d0a298deed699c03c8f94",
+    "status": "BYTE_EXACT_SYNCED_TEST_NOT_PRODUCTION"
+  }
+}

@@ -1,0 +1,29 @@
+RPM LEARN — S2B v2.6 EVIDENCE SCHEMA CONTRACT DEFECT
+Date: 2026-10-02
+Status: FAIL-CLOSED HARDENING FINDING / v2.6 NOT PROMOTABLE / S3 CLOSED
+
+Fresh static audit found a version-binding defect between the exact v2.6 browser evidence producer and the fingerprint-bound JSON Schema.
+
+Observed exact repository bytes:
+- canonical/s2b/v2.6/browser-acceptance-runner.mjs writes schemaVersion = rpm-s2b-browser-evidence/v3.
+- canonical/s2b/v2.6/schemas/browser-acceptance-evidence.schema.json constrains schemaVersion to rpm-s2b-browser-evidence/v1.
+- browser-acceptance-static-tests.mjs explicitly requires the runner marker rpm-s2b-browser-evidence/v3, so the runner version is intentional rather than accidental text drift.
+
+Consequence:
+Any evidence document produced by the exact v2.6 runner cannot validate against the exact v2.6 evidence JSON Schema because the schemaVersion const mismatches. Runtime learning behavior may still be correct, but promotion evidence is internally inconsistent. Therefore v2.6 must remain fail-closed even if the standards-browser harness later reports runtime PASS.
+
+Required repair discipline:
+1. Do not mutate the already fingerprinted v2.6 candidate silently.
+2. Create a successor candidate identity with an evidence schema matching v3 and explicit build/execution-mode binding.
+3. Regenerate the build fingerprint and source checksum manifest.
+4. Rerun package gate plus full deterministic/static QA.
+5. Publish the exact successor bytes to TEST.
+6. Run real-browser pre-offline and offline acceptance.
+7. Promote only the exact successor build after all gates PASS.
+
+Boundaries unchanged:
+RPM-UX-BASELINE-LOCK-01 preserved.
+Final Romanian voice deferred.
+AM22N remains read-only/adult-only.
+Learning Engine != Compliance Engine.
+Production, real learner/employer data, legal claims and certificate issuance remain OFF.

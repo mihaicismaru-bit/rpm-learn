@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "rpm-s2b-hosted-offline-gate-request/v1",
+  "checkpoint": "RPM-S2B",
+  "build": {
+    "id": "RPM-S2B-BROWSER-GATE-v2.6.1",
+    "combinedSha256": "ab0f271928aa195f1a22835d42a0e93afe791a30dd56e195c8f05609ef1780a5",
+    "fingerprintSchema": "rpm-s2b-build-fingerprint/v1"
+  },
+  "testOrigin": "https://mihaicismaru-bit.github.io/rpm-learn/s2b-v26",
+  "runner": "tools/s2b-v261-hosted-offline-gate.mjs",
+  "evidenceValidator": "tools/s2b-v261-browser-evidence-gate.mjs",
+  "expectedEvidence": {
+    "schemaVersion": "rpm-s2b-browser-evidence/v3",
+    "file": "RPM_S2B_BROWSER_ACCEPTANCE_EVIDENCE.json",
+    "status": "PASS",
+    "phase": "OFFLINE_RELOAD_COMPLETE",
+    "classification": "ACCEPTED",
+    "message": "RPM_S2B_BROWSER_ACCEPTANCE_PASS",
+    "requiredAssertions": [
+      "service-worker-control",
+      "offline-learner-shell-reload"
+    ]
+  },
+  "executionRequirements": {
+    "standardsChromium": true,
+    "outboundHttpsToExactTestOrigin": true,
+    "cdpNetworkOfflineEmulation": true,
+    "externalOriginMode": true,
+    "serveLocal": false
+  },
+  "promotionPolicy": {
+    "promotionAllowedBeforePass": false,
+    "openS3BeforePass": false,
+    "mainCanonicalUntilPromotion": true,
+    "ghPagesTestOnly": true
+  },
+  "boundaries": {
+    "productionRelease": false,
+    "realLearnerEmployerData": false,
+    "legalComplianceClaims": false,
+    "certificateIssuance": false,
+    "learningEngineSeparateFromComplianceEngine": true
+  },
+  "currentStatus": "PENDING_EXTERNAL_RUNTIME_GATE"
+}

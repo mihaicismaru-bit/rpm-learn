@@ -1,0 +1,32 @@
+RPM LEARN — S2B v2.6.1 HOSTED OFFLINE RUNTIME ATTEMPT
+Status: FAIL-CLOSED / OFFLINE RELOAD NOT CREDITED / MAIN UNCHANGED / S3 CLOSED
+
+Exact build under test
+- TEST origin: https://mihaicismaru-bit.github.io/rpm-learn/s2b-v26
+- Build ID: RPM-S2B-BROWSER-GATE-v2.6.1
+- Combined SHA-256: b534ff27973a982282e5dda3f43680f6b79c0218eb0501bae1038594c2b82cae
+- Fingerprint scope: 39/39 PASS
+- Source checksum closure: 42/42 PASS
+
+Material repository progress
+- de433cee2ba58dd304fe3903f654585340b38008: existing S2B v2.6.1 QA workflow now executes the exact hosted TEST offline gate and preserves RPM_S2B_BROWSER_ACCEPTANCE_EVIDENCE.json as an artifact on success or failure.
+- 834b4074b53acae4772e08c13d3405c90cc49221: non-fingerprint hosted utility launches and stabilizes standards Chromium/CDP before attaching the exact fingerprint-bound runner.
+- a2e5d2d15f0c56483920f0b05ececd362b2ca201: isolated-target experiment proved that closing the sole page target can terminate CDP; no runtime PASS was claimed.
+- ec4a445176feb665e7375873a7dbbf6f12a4d505: conservative single retry was added after a transient navigation abort while preserving exact runner bytes and fail-closed validation.
+
+Observed runtime evidence
+- GitHub Actions run 37028186286: package/deterministic/static QA PASS; hosted runtime gate FAIL at initial Page.navigate with net::ERR_ABORTED; FAIL evidence artifact 11235922731 preserved.
+- GitHub Actions run 37028414630: same deterministic/static PASS and same Page.navigate net::ERR_ABORTED; FAIL evidence artifact 11236780874 preserved.
+- GitHub Actions run 37028640443: isolated-target experiment failed at CDP bootstrap after the sole target was closed; no evidence file produced.
+- GitHub Actions run 37028968980: exact runner was attempted twice against the stabilized existing browser; both Page.navigate calls returned net::ERR_ABORTED; FAIL evidence artifact 11236527022 preserved.
+- Browser surface available to this run exposed DOM/Playwright but no network-offline/CDP controls. It independently reconfirmed RPM_S2B_BROWSER_PREOFFLINE_PASS across the complete visible pre-offline contract on the exact hosted TEST page.
+
+Gate meaning
+- No OFFLINE_RELOAD_COMPLETE evidence v3 was produced.
+- No RPM_S2B_BROWSER_ACCEPTANCE_PASS is claimed.
+- The workflow bridge, artifact preservation, browser bootstrap, and bounded retry are additive hardening outside the 39-file fingerprint scope.
+- Fingerprint-bound runtime bytes, gh-pages TEST bytes, main, production, real data, legal claims, certificates, and S3 were not changed.
+- PR #3 remains draft/open; promotion remains forbidden.
+
+NEXT EXACT ACTION
+Diagnose why Chrome DevTools Page.navigate returns net::ERR_ABORTED for the exact hosted acceptance page in the GitHub-hosted Chromium environment, or execute the unchanged runner in another standards Chromium environment that exposes CDP Network.emulateNetworkConditions and outbound access to the exact TEST origin. Require evidence v3 with status=PASS, phase=OFFLINE_RELOAD_COMPLETE, message=RPM_S2B_BROWSER_ACCEPTANCE_PASS, 31 exact assertions, and validator PASS before any main promotion or S3 opening.

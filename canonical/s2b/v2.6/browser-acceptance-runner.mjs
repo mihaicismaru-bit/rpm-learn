@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * RPM LEARN S2B fail-closed browser acceptance runner v2.6.
+ * RPM LEARN S2B fail-closed browser acceptance runner v2.6.1.
  * Development QA only. It never publishes, authenticates real users, or changes legal/compliance state.
  *
  * Local mode (default): starts a localhost static server and Chromium.
@@ -30,7 +30,7 @@ const children = [];
 let browserVersion = null;
 const startedAt = new Date().toISOString();
 const buildFingerprint = JSON.parse(readFileSync(new URL('./RPM_S2B_BUILD_FINGERPRINT.json', import.meta.url), 'utf8'));
-if (buildFingerprint?.schemaVersion !== 'rpm-s2b-build-fingerprint/v1' || !buildFingerprint?.combinedSha256 || buildFingerprint?.buildId !== 'RPM-S2B-BROWSER-GATE-v2.6') throw new Error('BUILD_FINGERPRINT_INVALID');
+if (buildFingerprint?.schemaVersion !== 'rpm-s2b-build-fingerprint/v1' || !buildFingerprint?.combinedSha256 || buildFingerprint?.buildId !== 'RPM-S2B-BROWSER-GATE-v2.6.1') throw new Error('BUILD_FINGERPRINT_INVALID');
 const BUILD_ROOT=path.dirname(fileURLToPath(import.meta.url));
 function verifyBuildFingerprint(){
   const names=Object.keys(buildFingerprint.files||{});
@@ -175,11 +175,11 @@ async function main() {
   if (appNav.errorText) throw new Error(`APP_NAVIGATION_BLOCKED:${appNav.errorText}`);
   await sleep(800);
   await cdp.eval('navigator.serviceWorker.ready.then(()=>true)', true);
-  await cdp.call('Page.reload',{ignoreCache:true}); await sleep(700);
+  await cdp.call('Page.reload',{ignoreCache:false}); await sleep(700);
   if (!(await cdp.eval('!!navigator.serviceWorker.controller'))) throw new Error('SERVICE_WORKER_NOT_CONTROLLING');
 
   await cdp.call('Network.emulateNetworkConditions',{offline:true,latency:0,downloadThroughput:0,uploadThroughput:0,connectionType:'none'});
-  await cdp.call('Page.reload',{ignoreCache:true}); await sleep(900);
+  await cdp.call('Page.reload',{ignoreCache:false}); await sleep(900);
   const role=await cdp.eval("document.querySelector('#roleBadge')?.textContent || ''");
   const title=await cdp.eval('document.title');
   if (!String(role).includes('LEARNER')) throw new Error(`OFFLINE_SHELL_FAIL:${title}|${role}`);
