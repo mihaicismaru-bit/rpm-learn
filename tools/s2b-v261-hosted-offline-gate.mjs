@@ -60,6 +60,47 @@ function runNode(args, env) {
   });
 }
 
+function runAcceptance(args, env, evidencePath, timeoutMs=30000) {
+  try { fs.rmSync(evidencePath, { force: true }); } catch {}
+  return new Promise((resolve, reject) => {
+    const child = spawn(process.execPath, args, { stdio: 'inherit', env });
+    let settled = false;
+    const settle = (error=null) => {
+      if (settled) return;
+      settled = true;
+      if (error) reject(error); else resolve();
+    };
+    child.on('error', error => settle(error));
+    child.on('exit', code => {
+      if (settled) return;
+      code === 0 ? settle() : settle(new Error(`CHILD_EXIT_${code}`));
+    });
+    (async () => {
+      const attempts = Math.ceil(timeoutMs / 100);
+      for (let i=0; i<attempts && !settled; i++) {
+        await sleep(100);
+        try {
+          const payload = JSON.parse(fs.readFileSync(evidencePath, 'utf8'));
+          if (
+            payload?.status === 'PASS' &&
+            payload?.phase === 'OFFLINE_RELOAD_COMPLETE' &&
+            payload?.message === 'RPM_S2B_BROWSER_ACCEPTANCE_PASS'
+          ) {
+            try { child.kill('SIGTERM'); } catch {}
+            console.log('RPM_S2B_V261_ACCEPTANCE_EVIDENCE_OBSERVED_PASS');
+            settle();
+            return;
+          }
+        } catch {}
+      }
+      if (!settled) {
+        try { child.kill('SIGTERM'); } catch {}
+        settle(new Error('ACCEPTANCE_CHILD_TIMEOUT_NO_PASS_EVIDENCE'));
+      }
+    })().catch(error => settle(error));
+  });
+}
+
 async function waitForCdp(tries=100) {
   const url = `http://${HOSTED_GATE.cdpHost}:${HOSTED_GATE.cdpPort}/json/version`;
   let last;
@@ -131,7 +172,7 @@ export async function runHostedGate() {
       RPM_EVIDENCE_FILE: evidence
     };
     try {
-      await runNode([runner], env);
+      await runAcceptance([runner], env, evidence);
     } catch (firstError) {
       try {
         const response = await fetch(`http://${HOSTED_GATE.cdpHost}:${HOSTED_GATE.cdpPort}/json`);
@@ -141,7 +182,7 @@ export async function runHostedGate() {
         console.log(`RPM_S2B_V261_POST_ABORT_TARGETS_UNAVAILABLE ${diagnosticError?.message || diagnosticError}`);
       }
       await sleep(1250);
-      await runNode([runner], env);
+      await runAcceptance([runner], env, evidence);
     }
     await runNode([gate, evidence], env);
     console.log(`RPM_S2B_V261_HOSTED_OFFLINE_GATE_PASS build=${HOSTED_GATE.buildId} hash=${HOSTED_GATE.combinedSha256} origin=${HOSTED_GATE.origin} evidence=${evidence}`);
