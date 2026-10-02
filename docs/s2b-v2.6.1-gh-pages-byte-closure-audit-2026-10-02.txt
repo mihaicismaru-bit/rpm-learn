@@ -1,0 +1,34 @@
+RPM LEARN — S2B v2.6.1 GH-PAGES BYTE-CLOSURE AUDIT
+Date: 2026-10-02
+Scope: TEST / NOT PRODUCTION only
+
+Result: PASS — 39/39 fingerprint-bound files on branch gh-pages under s2b-v26 match the SHA-256 values declared by s2b-v26/RPM_S2B_BUILD_FINGERPRINT.json.
+
+Bound identity:
+- schemaVersion: rpm-s2b-build-fingerprint/v1
+- buildId: RPM-S2B-BROWSER-GATE-v2.6.1
+- combinedSha256: b534ff27973a982282e5dda3f43680f6b79c0218eb0501bae1038594c2b82cae
+- checked files: 39
+- mismatches: 0
+
+The audit fetched each fingerprint-bound file directly from repository branch gh-pages using the GitHub file API, decoded its exact bytes (including binary PNG assets), recomputed SHA-256, and compared it with the declared file hash. Both icon-192.png and icon-512.png matched. browser-acceptance-runner.mjs and schemas/browser-acceptance-evidence.schema.json also matched the v2.6.1 fingerprint.
+
+Representative Git blob readbacks:
+- browser-acceptance-runner.mjs: c6c3270920cfc75b57513354b4f3f7ff28afeea2
+- schemas/browser-acceptance-evidence.schema.json: f7333ab498f60da1f9993ad6bcc5c5186daeb333
+- icon-512.png: c245479d8d0c03dffe1dbd58d1bdc0f16f006aed
+- browser-acceptance.html: 75731d06bf3738710076ff27005746c643195cd1
+
+Gate meaning:
+- This closes repository TEST byte-drift risk for the complete fingerprint scope.
+- It does NOT constitute OFFLINE_RELOAD_COMPLETE.
+- It does NOT prove the live GitHub Pages edge is serving every byte without deployment/cache lag.
+- main remains canonical and unchanged.
+- gh-pages remains TEST / NOT PRODUCTION only.
+- S3 remains CLOSED until exact-build standards-browser offline runtime PASS.
+
+Boundaries preserved:
+RPM-UX-BASELINE-LOCK-01; final Romanian voice deferred; AM22N read-only/adult-only; Learning Engine != Compliance Engine; XP/gamification/screen time are not automatically validated learning time; production/real learner-employer data/legal claims/certificates OFF.
+
+NEXT EXACT ACTION:
+Execute the exact hosted TEST successor in a standards Chromium environment with CDP Network.emulateNetworkConditions, require evidence v3 phase=OFFLINE_RELOAD_COMPLETE and message=RPM_S2B_BROWSER_ACCEPTANCE_PASS, validate that artifact with tools/s2b-v261-browser-evidence-gate.mjs, then promote only after runtime evidence PASS.
