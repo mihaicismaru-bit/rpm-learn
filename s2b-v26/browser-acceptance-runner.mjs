@@ -179,7 +179,7 @@ async function main() {
   if (!(await cdp.eval('!!navigator.serviceWorker.controller'))) throw new Error('SERVICE_WORKER_NOT_CONTROLLING');
 
   await cdp.call('Network.emulateNetworkConditions',{offline:true,latency:0,downloadThroughput:0,uploadThroughput:0,connectionType:'none'});
-  await cdp.call('Page.reload',{ignoreCache:true}); await sleep(900);
+  await cdp.call('Page.reload',{ignoreCache:false}); await sleep(900);
   const role=await cdp.eval("document.querySelector('#roleBadge')?.textContent || ''");
   const title=await cdp.eval('document.title');
   if (!String(role).includes('LEARNER')) throw new Error(`OFFLINE_SHELL_FAIL:${title}|${role}`);
