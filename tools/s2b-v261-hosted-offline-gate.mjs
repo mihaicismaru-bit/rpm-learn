@@ -7,6 +7,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
+import { setTimeout as sleep } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
 import process from 'node:process';
 
@@ -15,7 +16,9 @@ export const HOSTED_GATE = Object.freeze({
   buildId: 'RPM-S2B-BROWSER-GATE-v2.6.1',
   combinedSha256: 'b534ff27973a982282e5dda3f43680f6b79c0218eb0501bae1038594c2b82cae',
   fingerprintSchema: 'rpm-s2b-build-fingerprint/v1',
-  evidenceFile: 'RPM_S2B_BROWSER_ACCEPTANCE_EVIDENCE.json'
+  evidenceFile: 'RPM_S2B_BROWSER_ACCEPTANCE_EVIDENCE.json',
+  cdpHost: '127.0.0.1',
+  cdpPort: 9229
 });
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -57,21 +60,55 @@ function runNode(args, env) {
   });
 }
 
+async function waitForCdp(tries=100) {
+  const url = `http://${HOSTED_GATE.cdpHost}:${HOSTED_GATE.cdpPort}/json/version`;
+  let last;
+  for (let i=0; i<tries; i++) {
+    try {
+      const response = await fetch(url);
+      if (response.ok) return await response.json();
+    } catch (error) {
+      last = error;
+    }
+    await sleep(100);
+  }
+  throw new Error(`CDP_UNAVAILABLE:${last?.message || 'timeout'}`);
+}
+
 export async function runHostedGate() {
   const chrome = resolveChrome();
   await verifyHostedIdentity();
   const evidence = path.resolve(process.cwd(), HOSTED_GATE.evidenceFile);
-  const env = {
-    ...process.env,
-    RPM_ORIGIN: HOSTED_GATE.origin,
-    RPM_SERVE_LOCAL: '0',
-    RPM_LAUNCH_BROWSER: '1',
-    RPM_CHROME: chrome,
-    RPM_EVIDENCE_FILE: evidence
-  };
-  await runNode([runner], env);
-  await runNode([gate, evidence], env);
-  console.log(`RPM_S2B_V261_HOSTED_OFFLINE_GATE_PASS build=${HOSTED_GATE.buildId} hash=${HOSTED_GATE.combinedSha256} origin=${HOSTED_GATE.origin} evidence=${evidence}`);
+  const profile = `/tmp/rpm-learn-hosted-gate-${process.pid}`;
+  const browser = spawn(chrome, [
+    '--headless=new',
+    '--no-sandbox',
+    '--disable-dev-shm-usage',
+    '--disable-gpu',
+    `--remote-debugging-port=${HOSTED_GATE.cdpPort}`,
+    '--remote-allow-origins=*',
+    `--user-data-dir=${profile}`,
+    'about:blank'
+  ], { stdio: 'ignore' });
+
+  try {
+    await waitForCdp();
+    await sleep(500);
+    const env = {
+      ...process.env,
+      RPM_ORIGIN: HOSTED_GATE.origin,
+      RPM_SERVE_LOCAL: '0',
+      RPM_LAUNCH_BROWSER: '0',
+      RPM_CDP_HOST: HOSTED_GATE.cdpHost,
+      RPM_CDP_PORT: String(HOSTED_GATE.cdpPort),
+      RPM_EVIDENCE_FILE: evidence
+    };
+    await runNode([runner], env);
+    await runNode([gate, evidence], env);
+    console.log(`RPM_S2B_V261_HOSTED_OFFLINE_GATE_PASS build=${HOSTED_GATE.buildId} hash=${HOSTED_GATE.combinedSha256} origin=${HOSTED_GATE.origin} evidence=${evidence}`);
+  } finally {
+    try { browser.kill('SIGTERM'); } catch {}
+  }
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
