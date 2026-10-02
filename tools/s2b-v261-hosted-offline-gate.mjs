@@ -75,19 +75,6 @@ async function waitForCdp(tries=100) {
   throw new Error(`CDP_UNAVAILABLE:${last?.message || 'timeout'}`);
 }
 
-async function prepareSinglePageTarget() {
-  const base = `http://${HOSTED_GATE.cdpHost}:${HOSTED_GATE.cdpPort}`;
-  const pages = await (await fetch(`${base}/json`)).json();
-  for (const page of pages) {
-    if (page?.id) {
-      try { await fetch(`${base}/json/close/${page.id}`); } catch {}
-    }
-  }
-  const created = await fetch(`${base}/json/new?about%3Ablank`, { method: 'PUT' });
-  if (!created.ok) throw new Error(`CDP_TARGET_CREATE_HTTP_${created.status}`);
-  await sleep(500);
-}
-
 export async function runHostedGate() {
   const chrome = resolveChrome();
   await verifyHostedIdentity();
@@ -106,7 +93,7 @@ export async function runHostedGate() {
 
   try {
     await waitForCdp();
-    await prepareSinglePageTarget();
+    await sleep(500);
     const env = {
       ...process.env,
       RPM_ORIGIN: HOSTED_GATE.origin,
@@ -116,7 +103,12 @@ export async function runHostedGate() {
       RPM_CDP_PORT: String(HOSTED_GATE.cdpPort),
       RPM_EVIDENCE_FILE: evidence
     };
-    await runNode([runner], env);
+    try {
+      await runNode([runner], env);
+    } catch (firstError) {
+      await sleep(750);
+      await runNode([runner], env);
+    }
     await runNode([gate, evidence], env);
     console.log(`RPM_S2B_V261_HOSTED_OFFLINE_GATE_PASS build=${HOSTED_GATE.buildId} hash=${HOSTED_GATE.combinedSha256} origin=${HOSTED_GATE.origin} evidence=${evidence}`);
   } finally {
