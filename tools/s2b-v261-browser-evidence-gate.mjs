@@ -16,7 +16,7 @@ export const EXPECTED = Object.freeze({
   classification: 'ACCEPTED',
   message: 'RPM_S2B_BROWSER_ACCEPTANCE_PASS',
   buildId: 'RPM-S2B-BROWSER-GATE-v2.6.1',
-  combinedSha256: 'b534ff27973a982282e5dda3f43680f6b79c0218eb0501bae1038594c2b82cae',
+  combinedSha256: 'ea0cc17f8ef4935897eedaab632621327c2e5b7d78680e7241d59ab002efb8eb',
   fingerprintSchema: 'rpm-s2b-build-fingerprint/v1',
   origin: 'https://mihaicismaru-bit.github.io/rpm-learn/s2b-v26'
 });
