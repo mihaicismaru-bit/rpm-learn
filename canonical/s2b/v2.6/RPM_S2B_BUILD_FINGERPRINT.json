@@ -1,7 +1,7 @@
 {
   "schemaVersion": "rpm-s2b-build-fingerprint/v1",
   "buildId": "RPM-S2B-BROWSER-GATE-v2.6.1",
-  "combinedSha256": "b534ff27973a982282e5dda3f43680f6b79c0218eb0501bae1038594c2b82cae",
+  "combinedSha256": "ea0cc17f8ef4935897eedaab632621327c2e5b7d78680e7241d59ab002efb8eb",
   "files": {
     "index.html": "1d3bd624e90d6e648a6723533ee84beca301edb3f5ae7368e1dfe25e2b8828ec",
     "offline.html": "1300ea2ead926aa38826de31c83b98b4812cbcddbb83d1b5baa840f7ef993c56",
@@ -15,7 +15,7 @@
     "icon-192.png": "c661db829d4f5688926925b02311ab9de0ae4960c3de1b73a22c02127e3daf89",
     "icon-512.png": "81361b3985fd938ed7ed35bb4fbd50cc2879a6ce523b83d80f92caa35cb33fa6",
     "browser-acceptance.html": "cee3b4aa5a8262698614281ce6e101c924ab4fca907052340176649d304e605c",
-    "browser-acceptance-runner.mjs": "75f18a5ca6ce857df6977d9f960e5dd07aa4cb52ad3800939379fd792c15a49c",
+    "browser-acceptance-runner.mjs": "4963ae7af472b22e054d4c9e91e86a485d07707bb2cd0309589a5098ddd96563",
     "browser-acceptance-static-tests.mjs": "37b1c518df3be3ab5209991e5cb4f1902beace2a74bdcf7bbc3f5a08d288936c",
     "acceptance-contract.mjs": "93b1a7da544f86237a1f7cd3138f366f8c6d7137fe4d7dc6d1734d81f617c588",
     "acceptance-contract-tests.mjs": "03a1baf032d16ca572c9d2631d2b2eaf0b842b6f7143429755e565dfb1bcafa6",
