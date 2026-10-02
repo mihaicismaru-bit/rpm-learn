@@ -1,7 +1,7 @@
 {
   "schema": "rpm-s2b-successor-package/v1",
   "packageId": "RPM-S2B-PACKAGE-v2.6.1-candidate",
-  "status": "EVIDENCE_SCHEMA_REPAIRED_PRE_FINGERPRINT",
+  "status": "SOURCE_PACKAGE_QA_PASS_TEST_SYNCED_BROWSER_PENDING",
   "predecessorRuntimeBuild": "RPM-S2B-BROWSER-GATE-v2.6",
   "predecessorFingerprint": "285a7fd70c1d92b4731d4663af95ec48b1fe02c322ad686ff7d4c3d66aeaffc0",
   "sourceRoot": "canonical/s2b/v2.6",
@@ -14,10 +14,23 @@
     "chromeExecutableNullable": true,
     "topLevelAdditionalProperties": false
   },
-  "fingerprint": "PENDING_REGENERATION",
-  "sourceChecksums": "PENDING_REGENERATION",
-  "deterministicStaticQa": "PENDING",
-  "runtimeBrowserAcceptance": "BLOCKED_UNTIL_FINGERPRINT_AND_QA_PASS",
+  "fingerprint": {
+    "buildId": "RPM-S2B-BROWSER-GATE-v2.6.1",
+    "combinedSha256": "b534ff27973a982282e5dda3f43680f6b79c0218eb0501bae1038594c2b82cae",
+    "fileCount": 39,
+    "status": "PASS"
+  },
+  "sourceChecksums": {
+    "entries": 42,
+    "status": "PASS"
+  },
+  "deterministicStaticQa": {
+    "status": "PASS",
+    "workflow": "S2B v2.6.1 QA",
+    "runId": 36967043859,
+    "headSha": "51ae13764fafbebbadb61a3e6d83a668d6adbaff"
+  },
+  "runtimeBrowserAcceptance": "PENDING_STANDARDS_BROWSER_CONNECTION",
   "promotionAllowed": false,
   "s3Open": false,
   "boundaries": {
@@ -29,5 +42,11 @@
     "realData": false,
     "legalClaims": false,
     "certificates": false
+  },
+  "testPreview": {
+    "branch": "gh-pages",
+    "path": "s2b-v26",
+    "headSha": "032cb6719ed587a75bb894a9293ffe13f48f38bc",
+    "status": "BYTE_EXACT_SYNCED_TEST_NOT_PRODUCTION"
   }
 }
