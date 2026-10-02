@@ -4,7 +4,7 @@
 93b1a7da544f86237a1f7cd3138f366f8c6d7137fe4d7dc6d1734d81f617c588  ./acceptance-contract.mjs
 9e9e82e8e8d3ed2ae22f330bbc9b762562abe467a509c810cccdaaf0a8a6d8a2  ./access.mjs
 7c16d5ce35ede1160a8b7952a6b714d36ed0fd336bd89470d12b5e8bbb740df8  ./app.mjs
-75f18a5ca6ce857df6977d9f960e5dd07aa4cb52ad3800939379fd792c15a49c  ./browser-acceptance-runner.mjs
+4963ae7af472b22e054d4c9e91e86a485d07707bb2cd0309589a5098ddd96563  ./browser-acceptance-runner.mjs
 37b1c518df3be3ab5209991e5cb4f1902beace2a74bdcf7bbc3f5a08d288936c  ./browser-acceptance-static-tests.mjs
 cee3b4aa5a8262698614281ce6e101c924ab4fca907052340176649d304e605c  ./browser-acceptance.html
 558cc5634c64ec43640201867d1695243359efeb8af8467117644d20519edcf7  ./build-fingerprint-self-check.mjs
