@@ -1,5 +1,5 @@
 5bef6c67a20f1973938cad6888bc9be2c16259187e758c3f330160fdd367908d  ./README.md
-c8886fdbb0298a407863e152823fb55e0c76bd1d6e439313cbf3b889aba5da18  ./RPM_S2B_BUILD_FINGERPRINT.json
+987e69e5cb12dbb35ec7d25e4df54c4e7a517e0d75afee67fb282a5848d542d4  ./RPM_S2B_BUILD_FINGERPRINT.json
 03a1baf032d16ca572c9d2631d2b2eaf0b842b6f7143429755e565dfb1bcafa6  ./acceptance-contract-tests.mjs
 93b1a7da544f86237a1f7cd3138f366f8c6d7137fe4d7dc6d1734d81f617c588  ./acceptance-contract.mjs
 9e9e82e8e8d3ed2ae22f330bbc9b762562abe467a509c810cccdaaf0a8a6d8a2  ./access.mjs
@@ -7,7 +7,7 @@ c8886fdbb0298a407863e152823fb55e0c76bd1d6e439313cbf3b889aba5da18  ./RPM_S2B_BUIL
 75f18a5ca6ce857df6977d9f960e5dd07aa4cb52ad3800939379fd792c15a49c  ./browser-acceptance-runner.mjs
 37b1c518df3be3ab5209991e5cb4f1902beace2a74bdcf7bbc3f5a08d288936c  ./browser-acceptance-static-tests.mjs
 cee3b4aa5a8262698614281ce6e101c924ab4fca907052340176649d304e605c  ./browser-acceptance.html
-51e2e3c828dccc1aca09851745aacdaa1af01834d2511aba081aea215b54830a  ./build-fingerprint-self-check.mjs
+558cc5634c64ec43640201867d1695243359efeb8af8467117644d20519edcf7  ./build-fingerprint-self-check.mjs
 0d3834a6069f6613122c697ecd58ac5d44f574160829c11eb986d0a594da55e4  ./build-fingerprint.mjs
 d309fb347e0935faa9a70408ec2400f0115fe77c15e66b9a58ad1fa2313c607f  ./event-store.mjs
 f05b6a133467b20a67b5efa53efb61935123d8501ce2a0fa6313db3c501937a8  ./fixture.mjs
