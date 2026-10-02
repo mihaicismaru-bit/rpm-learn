@@ -41,7 +41,6 @@
     "schemas/event.schema.json": "86a819ab946fbb7b9b8a6055f7ee2c9efca1a60e37689e13a5d62bc9231ba5d1",
     "schemas/lesson.schema.json": "458e5234934dfee12e5006be6c422217867259b77a602ba49d6eec9fa1214b10",
     "schemas/content-migration.schema.json": "a0e215d22595615454b9ba452b583e13938cdc88ea6a7c03e6414d82fb44380c",
-    "schemas/browser-acceptance-evidence.schema.json": "6dda7a99e8343bf827104bf7cacaab32dbd682320f59f281062aa69be710342e",
-    "build-fingerprint.mjs": "0d3834a6069f6613122c697ecd58ac5d44f574160829c11eb986d0a594da55e4"
+    "schemas/browser-acceptance-evidence.schema.json": "6dda7a99e8343bf827104bf7cacaab32dbd682320f59f281062aa69be710342e"
   }
 }
