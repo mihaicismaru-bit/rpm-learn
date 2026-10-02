@@ -75,6 +75,19 @@ async function waitForCdp(tries=100) {
   throw new Error(`CDP_UNAVAILABLE:${last?.message || 'timeout'}`);
 }
 
+async function prepareSinglePageTarget() {
+  const base = `http://${HOSTED_GATE.cdpHost}:${HOSTED_GATE.cdpPort}`;
+  const pages = await (await fetch(`${base}/json`)).json();
+  for (const page of pages) {
+    if (page?.id) {
+      try { await fetch(`${base}/json/close/${page.id}`); } catch {}
+    }
+  }
+  const created = await fetch(`${base}/json/new?about%3Ablank`, { method: 'PUT' });
+  if (!created.ok) throw new Error(`CDP_TARGET_CREATE_HTTP_${created.status}`);
+  await sleep(500);
+}
+
 export async function runHostedGate() {
   const chrome = resolveChrome();
   await verifyHostedIdentity();
@@ -93,7 +106,7 @@ export async function runHostedGate() {
 
   try {
     await waitForCdp();
-    await sleep(500);
+    await prepareSinglePageTarget();
     const env = {
       ...process.env,
       RPM_ORIGIN: HOSTED_GATE.origin,
