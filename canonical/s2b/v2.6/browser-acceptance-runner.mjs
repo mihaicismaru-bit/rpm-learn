@@ -175,7 +175,7 @@ async function main() {
   if (appNav.errorText) throw new Error(`APP_NAVIGATION_BLOCKED:${appNav.errorText}`);
   await sleep(800);
   await cdp.eval('navigator.serviceWorker.ready.then(()=>true)', true);
-  await cdp.call('Page.reload',{ignoreCache:true}); await sleep(700);
+  await cdp.call('Page.reload',{ignoreCache:false}); await sleep(700);
   if (!(await cdp.eval('!!navigator.serviceWorker.controller'))) throw new Error('SERVICE_WORKER_NOT_CONTROLLING');
 
   await cdp.call('Network.emulateNetworkConditions',{offline:true,latency:0,downloadThroughput:0,uploadThroughput:0,connectionType:'none'});
