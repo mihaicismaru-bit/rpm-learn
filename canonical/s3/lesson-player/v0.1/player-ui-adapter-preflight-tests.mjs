@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { S3_5_PLAYER_UI_ADAPTER_PREFLIGHT } from './player-ui-adapter-preflight.mjs';
+import { projectSafeRuntimeFrame, createSafePlayerUiSessionPort } from './player-ui-render-sanitizer.mjs';
 import {
   RuntimeKind,
   deriveLessonRuntimeFrame,
@@ -22,6 +23,7 @@ const [html, app] = await Promise.all([
 assert.equal(S3_5_PLAYER_UI_ADAPTER_PREFLIGHT.status, 'PREFLIGHT_ONLY_S3_4_GATE_REQUIRED');
 assert.equal(S3_5_PLAYER_UI_ADAPTER_PREFLIGHT.productionIntegrationAllowed, false);
 assert.equal(S3_5_PLAYER_UI_ADAPTER_PREFLIGHT.mutatesDom, false);
+assert.equal(S3_5_PLAYER_UI_ADAPTER_PREFLIGHT.rawRuntimeFrameAccepted, false);
 assert.equal(S3_5_PLAYER_UI_ADAPTER_PREFLIGHT.baselineLock, 'RPM-UX-BASELINE-LOCK-01');
 
 const anchors = Object.values(S3_5_PLAYER_UI_ADAPTER_PREFLIGHT.requiredAnchors);
@@ -49,6 +51,14 @@ assert.deepEqual(
   [...S3_5_PLAYER_UI_ADAPTER_PREFLIGHT.inputContract.sessionPort],
   ['start', 'refresh', 'answer', 'complete']
 );
+assert.equal(S3_5_PLAYER_UI_ADAPTER_PREFLIGHT.sanitizerBoundary.projector, 'projectSafeRuntimeFrame');
+assert.equal(S3_5_PLAYER_UI_ADAPTER_PREFLIGHT.sanitizerBoundary.sessionPortFactory, 'createSafePlayerUiSessionPort');
+assert.equal(S3_5_PLAYER_UI_ADAPTER_PREFLIGHT.sanitizerBoundary.sourceLane, 'RLS-07');
+assert.equal(S3_5_PLAYER_UI_ADAPTER_PREFLIGHT.sanitizerBoundary.audioEnabled, false);
+assert.equal(S3_5_PLAYER_UI_ADAPTER_PREFLIGHT.sanitizerBoundary.speakingEnabled, false);
+assert.ok(S3_5_PLAYER_UI_ADAPTER_PREFLIGHT.forbiddenResponsibilities.includes('raw-runtime-frame-rendering'));
+assert.equal(typeof projectSafeRuntimeFrame, 'function');
+assert.equal(typeof createSafePlayerUiSessionPort, 'function');
 assert.equal(
   S3_5_PLAYER_UI_ADAPTER_PREFLIGHT.statusPolicy.INTEGRITY_BLOCKED,
   'render-integrity-block-readonly'
@@ -57,4 +67,4 @@ assert.ok(S3_5_PLAYER_UI_ADAPTER_PREFLIGHT.forbiddenResponsibilities.includes('d
 assert.ok(S3_5_PLAYER_UI_ADAPTER_PREFLIGHT.forbiddenResponsibilities.includes('speaking-auto-approval'));
 assert.equal(S3_5_PLAYER_UI_ADAPTER_PREFLIGHT.deferredLanes.audioMechanics, 'S4.1');
 
-console.log('RPM_S3_5_UI_ADAPTER_PREFLIGHT_PASS baseline-anchors selector-gap runtime-controller-ports readonly-integrity boundaries');
+console.log('RPM_S3_5_UI_ADAPTER_PREFLIGHT_PASS baseline-anchors selector-gap safe-render-boundary safe-session-port readonly-integrity boundaries');
