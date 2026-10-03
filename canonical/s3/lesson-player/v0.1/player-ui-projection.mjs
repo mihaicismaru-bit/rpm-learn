@@ -1,4 +1,4 @@
-export const PLAYER_UI_PROJECTION_VERSION = 1;
+export const PLAYER_UI_PROJECTION_VERSION = 2;
 
 export class PlayerUiProjectionError extends Error {
   constructor(code, detail = {}) {
@@ -21,8 +21,44 @@ function fail(code, detail = {}) {
   throw new PlayerUiProjectionError(code, detail);
 }
 
-function readonlyArray(value) {
-  return Object.freeze([...(Array.isArray(value) ? value : [])]);
+function deepFreeze(value) {
+  if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
+  for (const child of Object.values(value)) deepFreeze(child);
+  return Object.freeze(value);
+}
+
+function readonlyClone(value) {
+  if (value === undefined || value === null) return value ?? null;
+  return deepFreeze(structuredClone(value));
+}
+
+function readonlyStringArray(value, field) {
+  if (value === undefined || value === null) return Object.freeze([]);
+  if (!Array.isArray(value)) fail('UI_PROJECTION_ARRAY_REQUIRED', { field });
+  const copy = value.map((entry, index) => {
+    if (typeof entry !== 'string' || !entry) {
+      fail('UI_PROJECTION_ARRAY_STRING_REQUIRED', { field, index });
+    }
+    return entry;
+  });
+  if (new Set(copy).size !== copy.length) fail('UI_PROJECTION_ARRAY_DUPLICATE', { field });
+  return Object.freeze(copy);
+}
+
+function validateProgress(progress) {
+  if (!progress || typeof progress !== 'object') fail('UI_PROJECTION_PROGRESS_REQUIRED');
+  const { completedItems, totalItems, ratio } = progress;
+  if (!Number.isInteger(completedItems) || completedItems < 0) fail('UI_PROJECTION_PROGRESS_COMPLETED_INVALID');
+  if (!Number.isInteger(totalItems) || totalItems <= 0) fail('UI_PROJECTION_PROGRESS_TOTAL_INVALID');
+  if (completedItems > totalItems) fail('UI_PROJECTION_PROGRESS_RANGE_INVALID');
+  if (typeof ratio !== 'number' || !Number.isFinite(ratio) || ratio < 0 || ratio > 1) {
+    fail('UI_PROJECTION_PROGRESS_RATIO_INVALID');
+  }
+  const expected = completedItems / totalItems;
+  if (Math.abs(ratio - expected) > 1e-9) {
+    fail('UI_PROJECTION_PROGRESS_RATIO_MISMATCH', { expected, actual: ratio });
+  }
+  return readonlyClone(progress);
 }
 
 function baseActions() {
@@ -42,35 +78,67 @@ export function projectRuntimeFrame(frame) {
   if (typeof frame.lessonId !== 'string' || !frame.lessonId) fail('UI_PROJECTION_LESSON_ID_REQUIRED');
   if (typeof frame.contentVersion !== 'string' || !frame.contentVersion) fail('UI_PROJECTION_CONTENT_VERSION_REQUIRED');
 
-  const speakingPending = readonlyArray(frame.speakingPending);
+  const progress = validateProgress(frame.progress);
+  const speakingPending = readonlyStringArray(frame.speakingPending, 'speakingPending');
   const actions = baseActions();
   let mode;
   let message = null;
 
   if (frame.status === 'ACTIVE') {
     if (!frame.current) fail('UI_PROJECTION_ACTIVE_CURRENT_REQUIRED');
+    if (frame.canComplete === true || speakingPending.length !== 0 || progress.ratio >= 1) {
+      fail('UI_PROJECTION_ACTIVE_INVARIANT_FAILED');
+    }
     mode = 'ITEM';
     actions.answer = frame.current.answerable === true && frame.current.requiresHumanReview !== true;
   } else if (frame.status === 'AWAITING_HUMAN_REVIEW') {
+    if (!frame.current) fail('UI_PROJECTION_HUMAN_REVIEW_CURRENT_REQUIRED');
     if (speakingPending.length === 0) fail('UI_PROJECTION_HUMAN_REVIEW_PENDING_REQUIRED');
+    if (
+      frame.canComplete === true ||
+      frame.current.requiresHumanReview !== true ||
+      frame.current.answerable === true ||
+      typeof frame.current.itemId !== 'string' ||
+      !speakingPending.includes(frame.current.itemId) ||
+      progress.ratio >= 1
+    ) {
+      fail('UI_PROJECTION_HUMAN_REVIEW_INVARIANT_FAILED');
+    }
     mode = 'HUMAN_REVIEW_HOLD';
     message = 'În așteptarea validării umane.';
   } else if (frame.status === 'READY_TO_COMPLETE') {
-    if (frame.current !== null || frame.canComplete !== true || speakingPending.length !== 0) {
+    if (
+      frame.current !== null ||
+      frame.canComplete !== true ||
+      speakingPending.length !== 0 ||
+      progress.completedItems !== progress.totalItems ||
+      progress.ratio !== 1
+    ) {
       fail('UI_PROJECTION_COMPLETION_INVARIANT_FAILED');
     }
     mode = 'COMPLETION';
     actions.complete = true;
   } else if (frame.status === 'COMPLETED') {
-    if (frame.canComplete === true) fail('UI_PROJECTION_COMPLETED_CANNOT_COMPLETE_AGAIN');
+    if (
+      frame.current !== null ||
+      frame.canComplete === true ||
+      speakingPending.length !== 0 ||
+      progress.completedItems !== progress.totalItems ||
+      progress.ratio !== 1
+    ) {
+      fail('UI_PROJECTION_COMPLETED_INVARIANT_FAILED');
+    }
     mode = 'COMPLETED';
     message = 'Lecție finalizată.';
   } else {
+    if (frame.current !== null || frame.canComplete === true) {
+      fail('UI_PROJECTION_INTEGRITY_BLOCK_INVARIANT_FAILED');
+    }
     mode = 'INTEGRITY_BLOCK';
     message = 'Istoric local blocat pentru protecția integrității.';
   }
 
-  const current = frame.current ? Object.freeze({ ...frame.current }) : null;
+  const current = readonlyClone(frame.current);
   const audioAvailable = Boolean(current?.audioText);
 
   return Object.freeze({
@@ -80,7 +148,7 @@ export function projectRuntimeFrame(frame) {
     lessonId: frame.lessonId,
     contentVersion: frame.contentVersion,
     sourceLane: frame.sourceLane ?? null,
-    progress: frame.progress ? Object.freeze({ ...frame.progress }) : null,
+    progress,
     current,
     speakingPending,
     capabilities: Object.freeze({
@@ -91,7 +159,7 @@ export function projectRuntimeFrame(frame) {
     }),
     actions: Object.freeze(actions),
     message,
-    replay: frame.replay ? Object.freeze({ ...frame.replay }) : null
+    replay: readonlyClone(frame.replay)
   });
 }
 
