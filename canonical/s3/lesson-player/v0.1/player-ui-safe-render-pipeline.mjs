@@ -1,9 +1,11 @@
 import { projectSafeRuntimeFrame, createSafePlayerUiSessionPort } from './player-ui-render-sanitizer.mjs';
 import { buildPlayerUiRenderCommands } from './player-ui-render-commands.mjs';
+import { validatePlayerUiRenderModel } from './player-ui-render-model-invariants.mjs';
 
 export const PLAYER_UI_SAFE_RENDER_PIPELINE_VERSION = 1;
 
 function composeSafeModel(safeRenderModel) {
+  validatePlayerUiRenderModel(safeRenderModel);
   const renderPlan = buildPlayerUiRenderCommands(safeRenderModel);
   for (const field of ['sourceLane','status','lessonId','contentVersion']) {
     if (safeRenderModel[field] !== renderPlan[field]) throw new Error('UI_SAFE_PIPELINE_BINDING_MISMATCH:' + field);
