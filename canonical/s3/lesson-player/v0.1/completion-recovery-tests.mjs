@@ -98,5 +98,6 @@ async function ready(s){
 }
 
 await import('./s3-hosted-regression-extension.mjs');
+await import('./s3-5-hosted-regression-extension.mjs');
 
 console.log('RPM_S3_3_COMPLETION_RECOVERY_PASS ready-reload-equivalence completion-idempotent premature-blocked failed-write-stable invalid-sequence-readonly');
