@@ -20,9 +20,7 @@ function active(overrides = {}) {
       prompt: 'Alege.',
       answerable: true,
       requiresHumanReview: false,
-      choices: ['A','B'],
-      internalScore: 99,
-      correctAnswer: 'A'
+      choices: ['A','B']
     },
     speakingPending: [],
     capabilities: {
@@ -41,7 +39,8 @@ function active(overrides = {}) {
 function expectCode(model, code) {
   assert.throws(
     () => buildPlayerUiRenderCommands(model),
-    error => error instanceof PlayerUiRenderCommandError && error.code === code
+    error => error && error.code === code,
+    code
   );
 }
 
@@ -51,8 +50,7 @@ function expectCode(model, code) {
   assert.equal(plan.commands.some(command => ['#checkBtn','#xp','#time'].includes(command.anchor)), false);
   assert.deepEqual(plan.untouchedAnchors, ['#roleBadge','#lessonTitle','#xp','#time']);
   const exercise = plan.commands.find(command => command.anchor === '#exerciseBody').value;
-  assert.equal('internalScore' in exercise, false);
-  assert.equal('correctAnswer' in exercise, false);
+  assert.deepEqual(exercise.choices, ['A','B']);
 }
 
 expectCode({ ...active(), xp: 10 }, 'UI_RENDER_SAFE_MODEL_SHAPE_INVALID');
@@ -74,6 +72,18 @@ expectCode(
   'UI_RENDER_DEFERRED_CAPABILITY_ENABLED'
 );
 expectCode({ ...active(), status: 'UNKNOWN' }, 'UI_RENDER_STATUS_UNKNOWN');
+
+expectCode({ ...active(), projectionVersion: 1 }, 'UI_MODEL_PROJECTION_VERSION_UNSUPPORTED');
+expectCode(
+  { ...active(), progress: { completedItems: 0, totalItems: 2, ratio: 0.25 } },
+  'UI_MODEL_PROGRESS_RATIO_MISMATCH'
+);
+expectCode({ ...active(), mode: 'COMPLETION' }, 'UI_MODEL_STATUS_MODE_MISMATCH');
+{
+  const raw = active();
+  raw.current = { ...raw.current, internalScore: 99 };
+  expectCode(raw, 'UI_MODEL_CURRENT_SHAPE_INVALID');
+}
 
 {
   const hold = active({
@@ -131,4 +141,4 @@ expectCode({ ...active(), status: 'UNKNOWN' }, 'UI_RENDER_STATUS_UNKNOWN');
   );
 }
 
-console.log('RPM_S3_5_RENDER_COMMAND_BOUNDARY_PASS protected-anchors raw-authority-stripped RLS07-only deferred-actions status-gates');
+console.log('RPM_S3_5_RENDER_COMMAND_BOUNDARY_PASS protected-anchors raw-authority-rejected projection-pin progress-arithmetic status-mode RLS07-only deferred-actions status-gates');
