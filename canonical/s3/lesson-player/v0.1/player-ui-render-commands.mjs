@@ -98,8 +98,8 @@ function exercisePayload(model) {
 
 export function buildPlayerUiRenderCommands(safeRenderModel) {
   validateSafeModel(safeRenderModel);
-  validatePlayerUiRenderModel(safeRenderModel);
   const interaction = interactionFor(safeRenderModel);
+  validatePlayerUiRenderModel(safeRenderModel);
   const progressText = String(safeRenderModel.progress.completedItems) + '/' + String(safeRenderModel.progress.totalItems);
   const promptText = safeRenderModel.current?.prompt ?? safeRenderModel.message ?? '';
   const feedbackText = safeRenderModel.status === 'INTEGRITY_BLOCKED'
