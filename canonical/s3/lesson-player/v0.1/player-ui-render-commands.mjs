@@ -1,3 +1,5 @@
+import { validatePlayerUiRenderModel } from './player-ui-render-model-invariants.mjs';
+
 export const PLAYER_UI_RENDER_COMMANDS_VERSION = 1;
 
 export class PlayerUiRenderCommandError extends Error {
@@ -96,6 +98,7 @@ function exercisePayload(model) {
 
 export function buildPlayerUiRenderCommands(safeRenderModel) {
   validateSafeModel(safeRenderModel);
+  validatePlayerUiRenderModel(safeRenderModel);
   const interaction = interactionFor(safeRenderModel);
   const progressText = String(safeRenderModel.progress.completedItems) + '/' + String(safeRenderModel.progress.totalItems);
   const promptText = safeRenderModel.current?.prompt ?? safeRenderModel.message ?? '';
