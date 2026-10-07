@@ -39,11 +39,12 @@ const REVIEW_KEYS = Object.freeze(['humanReviewBridgeVersion','reviewId','client
 const REVIEW_AUTHORITY_KEYS = Object.freeze(['pathAdvance','xp','mastery','validatedTime','certificate','legal']);
 
 function validateLesson(lesson) {
+  if (lesson?.source?.lane !== 'RLS-07' || lesson?.source?.audience !== '16+') {
+    fail('MASTERY_SOURCE_LANE_BLOCKED', { lane: lesson?.source?.lane ?? null, audience: lesson?.source?.audience ?? null });
+  }
   const contract = validateLessonContentContract(lesson);
   if (!contract.valid) fail('MASTERY_LESSON_CONTRACT_INVALID', { code: contract.code });
-  if (contract.lane !== 'RLS-07' || lesson.source?.lane !== 'RLS-07' || lesson.source?.audience !== '16+') {
-    fail('MASTERY_SOURCE_LANE_BLOCKED', { lane: lesson.source?.lane ?? null, audience: lesson.source?.audience ?? null });
-  }
+  if (contract.lane !== 'RLS-07') fail('MASTERY_SOURCE_LANE_BLOCKED', { lane: contract.lane ?? null, audience: lesson.source?.audience ?? null });
   return contract;
 }
 
