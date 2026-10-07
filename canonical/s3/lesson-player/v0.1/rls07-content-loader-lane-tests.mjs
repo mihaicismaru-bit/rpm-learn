@@ -13,3 +13,4 @@ let code = '';
 try { new Rls07ContentRegistry().activate({ lesson, provenance:canonicalRls07Provenance() }); } catch (e) { code = e.code || ''; }
 if (code !== 'RLS07_LANE_REQUIRED') throw new Error('lane gate failed');
 console.log('RPM_S3_4_RLS07_LANE_PASS');
+await import('../../../s9/reports/v0.1/reports-evidence-pack-tests.mjs');
