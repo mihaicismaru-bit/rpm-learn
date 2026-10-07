@@ -78,16 +78,16 @@ async function appendSlice(store,source,{rawMs=2000,eligible=true}={}){
     basis:'meaningful_interaction',sourceEventType:source.type,sourceEventId:source.eventId,sourceEventSeq:source.seq
   });
   assert.equal(payload.durationMs,0);
+  assert.equal(payload.idleGapSuppressed,true);
   const event=makeEvent({
     type:EventType.TIME_SLICE,lessonId:lesson.lessonId,contentVersion:lesson.contentVersion,
     seq:nextSequenceCandidate(chain.contiguousHead),itemId:source.itemId,payload,ts:80000,
     sessionId:source.sessionId,subjectId:source.subjectId,organisationId:source.organisationId,role:source.role
   });
-  await store.append(event);
+  await assert.rejects(store.append(event),error=>error?.code==='TIME_SLICE_IDLE_RETROCREDIT_FORBIDDEN');
   const ledger=buildValidatedLearningTimeLedger({lesson,events:store.events});
   assert.equal(ledger.validatedLearningTimeMs,0);
   assert.equal(ledger.entryCount,0);
-  assert.equal(ledger.excludedTimeSliceCount,1);
 }
 
 {
