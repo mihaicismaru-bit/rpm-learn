@@ -8,5 +8,6 @@ await import('./player-ui-render-model-invariants-tests.mjs');
 await import('./player-ui-safe-session-port-tests.mjs');
 await import('./player-ui-safe-render-smoke.mjs');
 await import('./player-ui-safe-render-invariant-binding-tests.mjs');
+await import('../../../s9/reports/v0.1/reports-evidence-pack-tests.mjs');
 
 console.log('RPM_S3_5_HOSTED_EXTENSION_PASS projection sanitizer render-commands invariants session-port pipeline-binding non-dom');
