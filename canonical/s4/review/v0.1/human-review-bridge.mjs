@@ -4,7 +4,7 @@ import { SPEAKING_REVIEW_POLICY, SPEAKING_SUBMISSION_VERSION } from '../../speak
 export const HUMAN_REVIEW_BRIDGE_VERSION = 1;
 export const HUMAN_REVIEW_AUTHORITY = 'HUMAN_ONLY';
 export const HUMAN_REVIEWER_ROLE = 'TEACHER';
-export const HUMAN_REVIEW_DECISIONS = Object.freeze(['APPROVED', 'REJECTED']);
+export const HUMAN_REVIEW_DECISIONS = Object.freeze(['VALID', 'RETRY', 'NEEDS_SUPPORT']);
 
 export class HumanReviewBridgeError extends Error {
   constructor(code, detail = {}) {
@@ -42,7 +42,7 @@ const same = (a, b) => JSON.stringify(stable(a)) === JSON.stringify(stable(b));
 
 const SPEAKING_EVENT_KEYS = Object.freeze(['schemaVersion','eventId','sessionId','subjectId','organisationId','role','seq','type','lessonId','contentVersion','itemId','ts','payload']);
 const SPEAKING_PAYLOAD_KEYS = Object.freeze(['speakingSubmissionVersion','clientSubmissionId','mediaRef','evidenceClass','teacherReviewRequired','reviewPolicy','reviewState','sourceLane','sourceArtifactIds','sourceObserved','autoApproved','advance','xpDelta','masteryDelta','validatedTimeAuthority','certificateAuthority','legalAuthority']);
-const REVIEW_RECORD_KEYS = Object.freeze(['humanReviewBridgeVersion','reviewId','clientReviewId','speakingEventId','speakingEventSeq','learnerSubjectId','organisationId','reviewerId','reviewerRole','decision','reviewedAt','lessonId','contentVersion','itemId','sourceLane','sourceObserved','sourceArtifactIds','submissionClientId','reviewPolicy','authority']);
+const REVIEW_RECORD_KEYS = Object.freeze(['humanReviewBridgeVersion','reviewId','clientReviewId','speakingEventId','speakingEventSeq','learnerSubjectId','organisationId','reviewerId','reviewerRole','decision','approvalState','reviewedAt','lessonId','contentVersion','itemId','sourceLane','sourceObserved','sourceArtifactIds','submissionClientId','reviewPolicy','authority']);
 const REVIEW_AUTHORITY_KEYS = Object.freeze(['pathAdvance','xp','mastery','validatedTime','certificate','legal']);
 
 function assertReviewer(reviewer) {
@@ -96,6 +96,7 @@ function assertReviewRecord(record) {
   exactKeys(record.authority, REVIEW_AUTHORITY_KEYS, 'HUMAN_REVIEW_AUTHORITY_SHAPE_INVALID');
   if (record.humanReviewBridgeVersion !== HUMAN_REVIEW_BRIDGE_VERSION) fail('HUMAN_REVIEW_RECORD_VERSION_INVALID');
   if (!HUMAN_REVIEW_DECISIONS.includes(record.decision)) fail('HUMAN_REVIEW_DECISION_INVALID');
+  if (record.approvalState !== (record.decision === 'VALID' ? 'APPROVED' : 'REJECTED')) fail('HUMAN_REVIEW_APPROVAL_STATE_MISMATCH');
   if (record.reviewerRole !== HUMAN_REVIEWER_ROLE || record.sourceLane !== 'RLS-07' || record.reviewPolicy !== SPEAKING_REVIEW_POLICY) fail('HUMAN_REVIEW_RECORD_CONTRACT_INVALID');
   if (!Number.isInteger(record.speakingEventSeq) || record.speakingEventSeq < 1 || !Number.isInteger(record.reviewedAt) || record.reviewedAt < 1) fail('HUMAN_REVIEW_RECORD_SEQUENCE_TIME_INVALID');
   if (Object.values(record.authority).some(value => value !== false)) fail('HUMAN_REVIEW_AUTHORITY_ESCALATION_FORBIDDEN');
@@ -122,6 +123,7 @@ function buildRecord({ speakingEvent, reviewer, clientReviewId, decision, review
     reviewerId: reviewer.reviewerId,
     reviewerRole: reviewer.role,
     decision,
+    approvalState: decision === 'VALID' ? 'APPROVED' : 'REJECTED',
     reviewedAt,
     lessonId: evidence.lessonId,
     contentVersion: evidence.contentVersion,
@@ -147,7 +149,7 @@ function project(record, persistence) {
   return freeze({
     humanReviewBridgeVersion: HUMAN_REVIEW_BRIDGE_VERSION,
     persistence,
-    status: record.decision,
+    status: record.approvalState,
     reviewResolved: true,
     humanAuthority: HUMAN_REVIEW_AUTHORITY,
     reviewId: record.reviewId,
@@ -158,6 +160,7 @@ function project(record, persistence) {
     reviewerId: record.reviewerId,
     reviewerRole: record.reviewerRole,
     decision: record.decision,
+    approvalState: record.approvalState,
     lessonId: record.lessonId,
     contentVersion: record.contentVersion,
     itemId: record.itemId,
