@@ -1,0 +1,32 @@
+name: S3 Lesson Player v0.1 QA
+on:
+  push:
+    branches:
+      - s3/completion-recovery-v0.1-qa
+  pull_request:
+    branches:
+      - main
+permissions:
+  contents: read
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Preserve promoted S2 baseline
+        run: |
+          node tools/s2b-package-gate-v2.mjs --source-root canonical/s2b/v2.6 --sums packaging/s2b/v2.6.1/SHA256SUMS.txt --fingerprint canonical/s2b/v2.6/RPM_S2B_BUILD_FINGERPRINT.json
+          cd canonical/s2b/v2.6
+          node build-fingerprint-self-check.mjs
+      - name: Lesson Player engine contract
+        run: node canonical/s3/lesson-player/v0.1/lesson-player-engine-tests.mjs
+      - name: S3.1 persisted session controller
+        run: node canonical/s3/lesson-player/v0.1/session-controller-tests.mjs
+      - name: S3.2 lesson runtime
+        run: node canonical/s3/lesson-player/v0.1/lesson-runtime-tests.mjs
+      - name: S3.3 completion and recovery
+        run: node canonical/s3/lesson-player/v0.1/completion-recovery-tests.mjs
