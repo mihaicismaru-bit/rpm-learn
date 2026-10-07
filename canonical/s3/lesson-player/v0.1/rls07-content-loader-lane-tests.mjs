@@ -14,3 +14,4 @@ try { new Rls07ContentRegistry().activate({ lesson, provenance:canonicalRls07Pro
 if (code !== 'RLS07_LANE_REQUIRED') throw new Error('lane gate failed');
 console.log('RPM_S3_4_RLS07_LANE_PASS');
 await import('../../../s9/reports/v0.1/reports-evidence-pack-tests.mjs');
+await import('../../../s10/legal/v0.1/legal-configuration-candidate-tests.mjs');
