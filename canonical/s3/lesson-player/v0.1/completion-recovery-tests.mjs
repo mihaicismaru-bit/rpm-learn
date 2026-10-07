@@ -97,4 +97,31 @@ async function ready(s){
   assert.equal(store.events.length,n);
 }
 
+await import('./rls07-content-loader-basic-tests.mjs');
+await import('./rls07-content-loader-duplicate-tests.mjs');
+await import('./rls07-content-loader-lane-tests.mjs');
+await import('./rls07-content-loader-audience-tests.mjs');
+await import('./rls07-content-loader-provenance-tests.mjs');
+await import('./rls07-content-loader-integration-tests.mjs');
+await import('./player-ui-adapter-preflight-tests.mjs');
+await import('./player-ui-projection-tests.mjs');
+await import('./player-ui-render-sanitizer-tests.mjs');
+await import('./player-ui-render-command-boundary-tests.mjs');
+await import('./player-ui-render-command-determinism-tests.mjs');
+await import('./player-ui-render-command-kind-tests.mjs');
+await import('./player-ui-render-model-invariants-tests.mjs');
+await import('./player-ui-safe-session-port-tests.mjs');
+await import('./player-ui-safe-render-smoke.mjs');
+await import('./player-ui-safe-render-invariant-binding-tests.mjs');
+await import('../../../s4/audio/v0.1/audio-mechanics-tests.mjs');
+await import('../../../s4/speaking/v0.1/speaking-submission-tests.mjs');
+await import('../../../s4/review/v0.1/human-review-bridge-tests.mjs');
+await import('../../../s5/mastery/v0.1/mastery-engine-tests.mjs');
+await import('../../../s5/review/v0.1/spaced-review-tests.mjs');
+await import('../../../s5/gamification/v0.1/gamification-engine-tests.mjs');
+await import('../../../s6/time/v0.1/validated-learning-time-ledger-tests.mjs');
+await import('../../../s7/teacher/v0.1/teacher-os-tests.mjs');
+await import('../../../s8/employer/v0.1/employer-os-tests.mjs');
+await import('../../../s8/employer/v0.1/employer-os-hardening-tests.mjs');
+
 console.log('RPM_S3_3_COMPLETION_RECOVERY_PASS ready-reload-equivalence completion-idempotent premature-blocked failed-write-stable invalid-sequence-readonly');
