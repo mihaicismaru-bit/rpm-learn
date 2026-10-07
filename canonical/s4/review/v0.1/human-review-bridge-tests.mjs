@@ -66,9 +66,11 @@ async function submittedSpeakingEvent(clientSubmissionId = 'submission-1') {
   const store = new MemoryReviewStore();
   let now = 50000;
   const service = createHumanReviewBridgeService({ reviewStore: store, reviewer, now: () => ++now });
-  const result = await service.review({ speakingEvent, clientReviewId: 'review-approved-1', decision: 'APPROVED' });
+  const result = await service.review({ speakingEvent, clientReviewId: 'review-approved-1', decision: 'VALID' });
   assert.equal(result.persistence, 'PERSISTED');
+  assert.equal(result.decision, 'VALID');
   assert.equal(result.status, 'APPROVED');
+  assert.equal(result.approvalState, 'APPROVED');
   assert.equal(result.reviewResolved, true);
   assert.equal(result.humanAuthority, 'HUMAN_ONLY');
   assert.equal(result.pathAdvanced, false);
@@ -84,23 +86,37 @@ async function submittedSpeakingEvent(clientSubmissionId = 'submission-1') {
   const speakingEvent = await submittedSpeakingEvent('rejected-source');
   const store = new MemoryReviewStore();
   const service = createHumanReviewBridgeService({ reviewStore: store, reviewer, now: () => 60001 });
-  const result = await service.review({ speakingEvent, clientReviewId: 'review-rejected-1', decision: 'REJECTED' });
+  const result = await service.review({ speakingEvent, clientReviewId: 'review-rejected-1', decision: 'RETRY' });
+  assert.equal(result.decision, 'RETRY');
   assert.equal(result.status, 'REJECTED');
+  assert.equal(result.approvalState, 'REJECTED');
   assert.equal(result.pathAdvanced, false);
   assert.equal(store.reviews.length, 1);
+}
+
+
+{
+  const speakingEvent = await submittedSpeakingEvent('support-source');
+  const store = new MemoryReviewStore();
+  const service = createHumanReviewBridgeService({ reviewStore: store, reviewer, now: () => 65001 });
+  const result = await service.review({ speakingEvent, clientReviewId: 'review-support-1', decision: 'NEEDS_SUPPORT' });
+  assert.equal(result.decision, 'NEEDS_SUPPORT');
+  assert.equal(result.status, 'REJECTED');
+  assert.equal(result.approvalState, 'REJECTED');
+  assert.equal(result.pathAdvanced, false);
 }
 
 {
   const speakingEvent = await submittedSpeakingEvent('idem-source');
   const store = new MemoryReviewStore();
   const service = createHumanReviewBridgeService({ reviewStore: store, reviewer, now: () => 70001 });
-  const request = { speakingEvent, clientReviewId: 'review-idem-1', decision: 'APPROVED' };
+  const request = { speakingEvent, clientReviewId: 'review-idem-1', decision: 'VALID' };
   const first = await service.review(request);
   const second = await service.review(request);
   assert.equal(second.persistence, 'IDEMPOTENT_REPLAY');
   assert.equal(second.reviewId, first.reviewId);
   assert.equal(store.reviews.length, 1);
-  await reject(service.review({ ...request, decision: 'REJECTED' }), 'HUMAN_REVIEW_CLIENT_ID_REUSE_MISMATCH');
+  await reject(service.review({ ...request, decision: 'RETRY' }), 'HUMAN_REVIEW_CLIENT_ID_REUSE_MISMATCH');
   await reject(service.review({ ...request, clientReviewId: 'review-idem-2' }), 'HUMAN_REVIEW_EVIDENCE_ALREADY_DECIDED');
 }
 
@@ -109,7 +125,7 @@ async function submittedSpeakingEvent(clientSubmissionId = 'submission-1') {
   const store = new MemoryReviewStore();
   const foreignReviewer = { reviewerId: 'teacher-foreign', organisationId: 'org-foreign', role: 'TEACHER' };
   const service = createHumanReviewBridgeService({ reviewStore: store, reviewer: foreignReviewer, now: () => 80001 });
-  await reject(service.review({ speakingEvent, clientReviewId: 'review-foreign', decision: 'APPROVED' }), 'HUMAN_REVIEW_CROSS_TENANT_FORBIDDEN');
+  await reject(service.review({ speakingEvent, clientReviewId: 'review-foreign', decision: 'VALID' }), 'HUMAN_REVIEW_CROSS_TENANT_FORBIDDEN');
   throws(() => createHumanReviewBridgeService({
     reviewStore: store,
     reviewer: { reviewerId: 'learner-as-reviewer', organisationId: 'org-s43', role: 'LEARNER' }
@@ -121,7 +137,7 @@ async function submittedSpeakingEvent(clientSubmissionId = 'submission-1') {
   const store = new MemoryReviewStore();
   const selfReviewer = { reviewerId: speakingEvent.subjectId, organisationId: speakingEvent.organisationId, role: 'TEACHER' };
   const service = createHumanReviewBridgeService({ reviewStore: store, reviewer: selfReviewer, now: () => 90001 });
-  await reject(service.review({ speakingEvent, clientReviewId: 'review-self', decision: 'APPROVED' }), 'HUMAN_REVIEW_SELF_REVIEW_FORBIDDEN');
+  await reject(service.review({ speakingEvent, clientReviewId: 'review-self', decision: 'VALID' }), 'HUMAN_REVIEW_SELF_REVIEW_FORBIDDEN');
 }
 
 {
@@ -129,7 +145,7 @@ async function submittedSpeakingEvent(clientSubmissionId = 'submission-1') {
   const store = new MemoryReviewStore();
   const service = createHumanReviewBridgeService({ reviewStore: store, reviewer, now: () => 100001 });
   speakingEvent.payload.certificateEligible = true;
-  await reject(service.review({ speakingEvent, clientReviewId: 'review-tamper', decision: 'APPROVED' }), 'HUMAN_REVIEW_SPEAKING_PAYLOAD_SHAPE_INVALID');
+  await reject(service.review({ speakingEvent, clientReviewId: 'review-tamper', decision: 'VALID' }), 'HUMAN_REVIEW_SPEAKING_PAYLOAD_SHAPE_INVALID');
 }
 
 {
@@ -137,11 +153,11 @@ async function submittedSpeakingEvent(clientSubmissionId = 'submission-1') {
   const store = new MemoryReviewStore();
   const service = createHumanReviewBridgeService({ reviewStore: store, reviewer, now: () => 110001 });
   store.failNext = true;
-  await reject(service.review({ speakingEvent, clientReviewId: 'review-retry', decision: 'APPROVED' }), 'HUMAN_REVIEW_PERSIST_FAILED');
+  await reject(service.review({ speakingEvent, clientReviewId: 'review-retry', decision: 'VALID' }), 'HUMAN_REVIEW_PERSIST_FAILED');
   assert.equal(store.reviews.length, 0);
-  const result = await service.review({ speakingEvent, clientReviewId: 'review-retry', decision: 'APPROVED' });
+  const result = await service.review({ speakingEvent, clientReviewId: 'review-retry', decision: 'VALID' });
   assert.equal(result.persistence, 'PERSISTED');
   assert.equal(store.reviews.length, 1);
 }
 
-console.log('RPM_S4_3_HUMAN_REVIEW_BRIDGE_PASS human-only-decision approved-rejected immutable-history idempotent-review cross-tenant-role-self-review-blocked speaking-evidence-exact-shape persistence-readback no-path-xp-mastery-validtime-certificate-legal-authority');
+console.log('RPM_S4_3_HUMAN_REVIEW_BRIDGE_PASS human-only-decision VALID-RETRY-NEEDS_SUPPORT approval-state-derived immutable-history idempotent-review cross-tenant-role-self-review-blocked speaking-evidence-exact-shape persistence-readback no-path-xp-mastery-validtime-certificate-legal-authority');
