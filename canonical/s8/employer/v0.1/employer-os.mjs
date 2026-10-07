@@ -14,6 +14,20 @@ function assertEmployer(employer){
   if(employer.role!=='EMPLOYER')fail('EMPLOYER_OS_ROLE_FORBIDDEN',{role:employer.role??null});
   return freeze({...employer});
 }
+function assertTeacherView(teacherView,safeEmployer){
+  if(!teacherView||teacherView.teacherOsVersion!==1)fail('EMPLOYER_OS_TEACHER_VIEW_REQUIRED');
+  req(teacherView.organisationId,'teacherView.organisationId',256);req(teacherView.learnerSubjectId,'teacherView.learnerSubjectId',256);req(teacherView.lessonId,'teacherView.lessonId',256);req(teacherView.contentVersion,'teacherView.contentVersion',256);
+  if(teacherView.organisationId!==safeEmployer.organisationId)fail('EMPLOYER_OS_CROSS_TENANT_FORBIDDEN');
+  exactKeys(teacherView.progress,['completedItems','totalItems','ratio'],'EMPLOYER_OS_PROGRESS_SHAPE_INVALID');
+  const {completedItems,totalItems,ratio}=teacherView.progress;
+  if(!Number.isInteger(completedItems)||!Number.isInteger(totalItems)||completedItems<0||totalItems<0||completedItems>totalItems)fail('EMPLOYER_OS_PROGRESS_INVALID');
+  const expectedRatio=totalItems===0?0:completedItems/totalItems;
+  if(typeof ratio!=='number'||!Number.isFinite(ratio)||ratio<0||ratio>1||Math.abs(ratio-expectedRatio)>Number.EPSILON*8)fail('EMPLOYER_OS_PROGRESS_RATIO_INVALID');
+  if(!Number.isInteger(teacherView.validatedLearningTimeMs)||teacherView.validatedLearningTimeMs<0)fail('EMPLOYER_OS_VALIDATED_TIME_INVALID');
+  if(teacherView.rawLearnerResponsesExposed!==false||teacherView.xpExposed!==false||teacherView.gamificationExposed!==false)fail('EMPLOYER_OS_UPSTREAM_PRIVACY_CONTAMINATION');
+  if(teacherView.certificateAuthority!==false||teacherView.legalAuthority!==false||teacherView.complianceRuleAuthority!==false)fail('EMPLOYER_OS_UPSTREAM_AUTHORITY_CONTAMINATION');
+  return teacherView;
+}
 function operationalStatus(status){
   if(status==='COMPLETED')return 'COMPLETED';
   if(status==='AWAITING_HUMAN_REVIEW')return 'IN_REVIEW';
@@ -26,7 +40,7 @@ function validationSummary(records,teacherView){
   const foreign=records.filter(record=>record?.learnerSubjectId===teacherView.learnerSubjectId&&record?.organisationId!==teacherView.organisationId);
   if(foreign.length)fail('EMPLOYER_OS_CROSS_TENANT_VALIDATION_FORBIDDEN');
   const safe=matching.map(record=>{
-    if(!['PERIODIC','FINAL'].includes(record.validationKind)||!['VALID','RETRY','NEEDS_SUPPORT'].includes(record.decision))fail('EMPLOYER_OS_VALIDATION_RECORD_INVALID');
+    if(!['PERIODIC','FINAL'].includes(record.validationKind)||!['VALID','RETRY','NEEDS_SUPPORT'].includes(record.decision)||!Number.isFinite(record.validatedAt)||record.validatedAt<0)fail('EMPLOYER_OS_VALIDATION_RECORD_INVALID');
     return {validationKind:record.validationKind,decision:record.decision,validatedAt:record.validatedAt};
   }).sort((a,b)=>a.validatedAt-b.validatedAt||a.validationKind.localeCompare(b.validationKind));
   const latest=kind=>[...safe].reverse().find(record=>record.validationKind===kind)||null;
@@ -49,10 +63,7 @@ function safeReports(reportIndex,organisationId,learnerSubjectId){
 
 export function buildEmployerLearnerView({teacherView,teacherValidations=[],reportIndex=[],employer}){
   const safeEmployer=assertEmployer(employer);
-  if(!teacherView||teacherView.teacherOsVersion!==1)fail('EMPLOYER_OS_TEACHER_VIEW_REQUIRED');
-  if(teacherView.organisationId!==safeEmployer.organisationId)fail('EMPLOYER_OS_CROSS_TENANT_FORBIDDEN');
-  req(teacherView.learnerSubjectId,'teacherView.learnerSubjectId',256);
-  if(teacherView.certificateAuthority!==false||teacherView.legalAuthority!==false||teacherView.complianceRuleAuthority!==false)fail('EMPLOYER_OS_UPSTREAM_AUTHORITY_CONTAMINATION');
+  assertTeacherView(teacherView,safeEmployer);
   const validations=validationSummary(teacherValidations,teacherView);
   const reports=safeReports(reportIndex,safeEmployer.organisationId,teacherView.learnerSubjectId);
   return freeze({
