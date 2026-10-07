@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
-import { lesson } from '../../s2b/v2.6/fixture.mjs';
-import { LessonPlayerSessionController } from '../../s3/lesson-player/v0.1/session-controller.mjs';
-import { S3MemoryEventStore, correctLessonResponse } from '../../s3/lesson-player/v0.1/s3-test-support.mjs';
-import { createSpeakingSubmissionService } from '../../s4/speaking/v0.1/speaking-submission.mjs';
-import { createHumanReviewBridgeService } from '../../s4/review/v0.1/human-review-bridge.mjs';
+import { lesson } from '../../../s2b/v2.6/fixture.mjs';
+import { LessonPlayerSessionController } from '../../../s3/lesson-player/v0.1/session-controller.mjs';
+import { S3MemoryEventStore, correctLessonResponse } from '../../../s3/lesson-player/v0.1/s3-test-support.mjs';
+import { createSpeakingSubmissionService } from '../../../s4/speaking/v0.1/speaking-submission.mjs';
+import { createHumanReviewBridgeService } from '../../../s4/review/v0.1/human-review-bridge.mjs';
 import { MasteryEngineError, deriveMasterySnapshot } from './mastery-engine.mjs';
 
 const scope = { subjectId:'learner-s51', organisationId:'org-s51', role:'LEARNER' };
