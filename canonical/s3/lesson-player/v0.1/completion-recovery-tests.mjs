@@ -106,5 +106,6 @@ await import('../../../s5/mastery/v0.1/mastery-engine-tests.mjs');
 await import('../../../s5/review/v0.1/spaced-review-tests.mjs');
 await import('../../../s5/gamification/v0.1/gamification-engine-tests.mjs');
 await import('../../../s6/time/v0.1/validated-learning-time-ledger-tests.mjs');
+await import('../../../s7/teacher/v0.1/teacher-os-tests.mjs');
 
 console.log('RPM_S3_3_COMPLETION_RECOVERY_PASS ready-reload-equivalence completion-idempotent premature-blocked failed-write-stable invalid-sequence-readonly');
