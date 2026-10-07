@@ -93,7 +93,15 @@ export function buildTeacherLearnerView({lesson,events,masterySnapshot,learningT
   for(const queue of speakingReviewQueue)if(queue.status==='PENDING')flags.push(freeze({type:'SPEAKING_REVIEW_PENDING',itemId:queue.itemId,speakingEventId:queue.speakingEventId}));
 
   const lastActivityTs=replay.events.reduce((max,event)=>Math.max(max,Number(event.ts)||0),0)||null;
-  const completedItems=Object.values(replay.state.attempts).length;
+  const completedItems=replay.state.cursor;
+  const pendingSpeaking=speakingReviewQueue.some(row=>row.status==='PENDING');
+  const learnerStatus=replay.state.completed
+    ? 'COMPLETED'
+    : pendingSpeaking
+      ? 'AWAITING_HUMAN_REVIEW'
+      : replay.state.speakingPending.length
+        ? 'REVIEW_RESOLVED_PATH_PENDING'
+        : 'IN_PROGRESS';
   return freeze({
     teacherOsVersion:TEACHER_OS_VERSION,
     teacherId:safeTeacher.teacherId,
@@ -101,7 +109,7 @@ export function buildTeacherLearnerView({lesson,events,masterySnapshot,learningT
     learnerSubjectId,
     lessonId:lesson.lessonId,
     contentVersion:lesson.contentVersion,
-    learnerStatus:replay.state.completed?'COMPLETED':(replay.state.speakingPending.length?'AWAITING_HUMAN_REVIEW':'IN_PROGRESS'),
+    learnerStatus,
     progress:freeze({completedItems,totalItems:lesson.items.length,ratio:lesson.items.length?completedItems/lesson.items.length:0}),
     validatedLearningTimeMs:learningTimeLedger.validatedLearningTimeMs,
     lastActivityTs,
@@ -110,6 +118,12 @@ export function buildTeacherLearnerView({lesson,events,masterySnapshot,learningT
     flags,
     missedLearning:freeze({status:'DEFERRED_TO_COMPLIANCE_ENGINE',deficitMs:null,rule:'S10_LEGAL_CONFIGURATION_REQUIRED'}),
     assessmentEvidence:assessmentSummary(lesson,replay.events),
+    evidenceBinding:freeze({
+      masteryRuleVersion:masterySnapshot.masteryRuleVersion,
+      masteryReplayHeadSeq:masterySnapshot.replayHeadSeq,
+      learningTimeLedgerVersion:learningTimeLedger.ledgerVersion,
+      learningTimeEntryCount:learningTimeLedger.entryCount
+    }),
     rawLearnerResponsesExposed:false,
     xpExposed:false,
     gamificationExposed:false,
@@ -138,6 +152,7 @@ export function createTeacherValidationService({validationStore,teacher,now=()=>
       if(!TEACHER_VALIDATION_DECISIONS.includes(decision))fail('TEACHER_VALIDATION_DECISION_INVALID');
       if(!teacherView||teacherView.teacherOsVersion!==1||teacherView.teacherId!==safeTeacher.teacherId||teacherView.organisationId!==safeTeacher.organisationId)fail('TEACHER_VALIDATION_VIEW_BINDING_INVALID');
       if(validationKind==='FINAL'&&teacherView.speakingReviewQueue.some(row=>row.status==='PENDING'))fail('TEACHER_FINAL_VALIDATION_SPEAKING_PENDING');
+      if(validationKind==='FINAL'&&teacherView.learnerStatus!=='COMPLETED')fail('TEACHER_FINAL_VALIDATION_PATH_INCOMPLETE',{learnerStatus:teacherView.learnerStatus});
       await validationStore.open();
       const history=await validationStore.listValidations();if(!Array.isArray(history))fail('TEACHER_VALIDATION_HISTORY_INVALID');
       for(const record of history)assertValidationRecord(record);
@@ -150,7 +165,10 @@ export function createTeacherValidationService({validationStore,teacher,now=()=>
         teacherValidationVersion:1,validationId:`${teacherView.learnerSubjectId}:${teacherView.lessonId}:${validationKind}:${clientValidationId}`,
         clientValidationId,validationKind,decision,teacherId:safeTeacher.teacherId,organisationId:safeTeacher.organisationId,
         learnerSubjectId:teacherView.learnerSubjectId,lessonId:teacherView.lessonId,contentVersion:teacherView.contentVersion,validatedAt:Number(now()),
-        masteryRuleVersion:'0.1',masteryReplayHeadSeq:null,learningTimeLedgerVersion:1,learningTimeEntryCount:null,
+        masteryRuleVersion:teacherView.evidenceBinding.masteryRuleVersion,
+        masteryReplayHeadSeq:teacherView.evidenceBinding.masteryReplayHeadSeq,
+        learningTimeLedgerVersion:teacherView.evidenceBinding.learningTimeLedgerVersion,
+        learningTimeEntryCount:teacherView.evidenceBinding.learningTimeEntryCount,
         validatedLearningTimeMs:teacherView.validatedLearningTimeMs,speakingPendingCount:teacherView.speakingReviewQueue.filter(row=>row.status==='PENDING').length,
         certificateAuthority:false,legalAuthority:false,complianceAuthority:false
       });
