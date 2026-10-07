@@ -51,14 +51,40 @@ async function speakingFixture(){
   const view=buildTeacherLearnerView({lesson,events:eventStore.events,masterySnapshot:mastery,learningTimeLedger:time,humanReviews:reviewStore.rows,teacher});
   assert.equal(view.speakingReviewQueue[0].status,'VALID');assert.equal(view.speakingReviewQueue[0].approvalState,'APPROVED');
   const speakingSkill=view.skillProgress.find(x=>x.skill==='speaking_help');assert.equal(speakingSkill.teacherValidated,true);
+  assert.equal(view.learnerStatus,'REVIEW_RESOLVED_PATH_PENDING');
   const validationStore=new Store('validations');
   const service=createTeacherValidationService({validationStore,teacher,now:()=>10001});
-  const final=await service.validate({teacherView:view,clientValidationId:'final-1',validationKind:'FINAL',decision:'VALID'});
-  assert.equal(final.persistence,'PERSISTED');assert.equal(final.validationKind,'FINAL');assert.equal(final.decision,'VALID');
-  assert.equal(final.certificateAuthority,false);assert.equal(final.legalAuthority,false);assert.equal(final.complianceAuthority,false);
-  const replay=await service.validate({teacherView:view,clientValidationId:'final-1',validationKind:'FINAL',decision:'VALID'});
-  assert.equal(replay.persistence,'IDEMPOTENT_REPLAY');assert.equal(validationStore.rows.length,1);
+  const periodic=await service.validate({teacherView:view,clientValidationId:'periodic-1',validationKind:'PERIODIC',decision:'VALID'});
+  assert.equal(periodic.persistence,'PERSISTED');assert.equal(periodic.validationKind,'PERIODIC');assert.equal(periodic.decision,'VALID');
+  assert.equal(periodic.masteryReplayHeadSeq,view.evidenceBinding.masteryReplayHeadSeq);
+  assert.equal(periodic.learningTimeEntryCount,view.evidenceBinding.learningTimeEntryCount);
+  assert.equal(periodic.certificateAuthority,false);assert.equal(periodic.legalAuthority,false);assert.equal(periodic.complianceAuthority,false);
+  await rejectAsync(service.validate({teacherView:view,clientValidationId:'final-1',validationKind:'FINAL',decision:'VALID'}),'TEACHER_FINAL_VALIDATION_PATH_INCOMPLETE');
 }
+
+{
+  const noSpeaking=structuredClone(lesson);
+  noSpeaking.lessonId='RLS07-S7-NOSPEAK';
+  noSpeaking.contentVersion='rpm-rls07-s7-nospeak@0.1.0';
+  noSpeaking.items=noSpeaking.items.filter(item=>item.id!=='E06');
+  const eventStore=new S3MemoryEventStore();let tick=20000;
+  const controller=new LessonPlayerSessionController({lesson:noSpeaking,eventStore,scope:learnerScope,sessionId:'s7-final',now:()=>tick+=1000});
+  let learnerView=await controller.start();
+  while(learnerView.currentItem) learnerView=await controller.answer(learnerView.currentItem.id,correctLessonResponse(learnerView.currentItem));
+  await controller.complete();
+  const mastery=deriveMasterySnapshot({lesson:noSpeaking,events:eventStore.events,humanReviews:[]});
+  const time=buildValidatedLearningTimeLedger({lesson:noSpeaking,events:eventStore.events});
+  const view=buildTeacherLearnerView({lesson:noSpeaking,events:eventStore.events,masterySnapshot:mastery,learningTimeLedger:time,humanReviews:[],teacher});
+  assert.equal(view.learnerStatus,'COMPLETED');
+  const validationStore=new Store('validations');
+  const service=createTeacherValidationService({validationStore,teacher,now:()=>21001});
+  const final=await service.validate({teacherView:view,clientValidationId:'final-completed',validationKind:'FINAL',decision:'VALID'});
+  assert.equal(final.validationKind,'FINAL');assert.equal(final.decision,'VALID');assert.equal(final.persistence,'PERSISTED');
+  const replay=await service.validate({teacherView:view,clientValidationId:'final-completed',validationKind:'FINAL',decision:'VALID'});
+  assert.equal(replay.persistence,'IDEMPOTENT_REPLAY');assert.equal(validationStore.rows.length,1);
+  assert.equal(final.certificateAuthority,false);assert.equal(final.legalAuthority,false);
+}
+
 {
   const {eventStore,mastery,time}=await speakingFixture();
   const view=buildTeacherLearnerView({lesson,events:eventStore.events,masterySnapshot:mastery,learningTimeLedger:time,humanReviews:[],teacher});
