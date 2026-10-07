@@ -1,4 +1,4 @@
-import { EventType, analyseLearningReplay, validateLessonContentContract } from '../../s2b/v2.6/model.mjs';
+import { EventType, analyseLearningReplay, validateLessonContentContract } from '../../../s2b/v2.6/model.mjs';
 
 export const MASTERY_ENGINE_VERSION = 1;
 export const MASTERY_RULE_VERSION = '0.1';
