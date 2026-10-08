@@ -96,7 +96,7 @@ export function evaluateLegalConfigurationSimulation(payload){
       weekLabel:row.weekLabel,validatedLearningTimeMs:row.validatedLearningTimeMs,requiredMs:candidate.weeklyRequirementMs,
       simulationStatus:deficitMs===0?'SIMULATED_MEETS_RULE':'SIMULATED_DEFICIT',deficitMs,
       recoveryEligibility:candidate.recoveryAllowed?'SIMULATED_RULE_ALLOWS_RECOVERY':'SIMULATED_RULE_DISALLOWS_RECOVERY',
-      provenance:row.provenance,legalClaim:false
+      provenance:row.provenance,weekAttributionAuthority:false,weekAttributionStatus:'UNVERIFIED_SIMULATION_INPUT',legalClaim:false
     });
   });
   const minimumPeriodObserved=rows.length>=candidate.minimumPeriodWeeks;
@@ -105,7 +105,7 @@ export function evaluateLegalConfigurationSimulation(payload){
     status:'SIMULATION_ONLY_LEGAL_BLUEPRINT_REQUIRED',minimumPeriodObserved,weeks,
     totalValidatedLearningTimeMs:safeSum(rows,r=>r.validatedLearningTimeMs),
     totalDeficitMs:safeSum(weeks,r=>r.deficitMs),
-    legalBlueprintFinal:false,productionComplianceAuthority:false,certificateAuthority:false,legalClaim:false
+    weekAttributionAuthority:false,weekAttributionStatus:'UNVERIFIED_SIMULATION_INPUT',legalBlueprintFinal:false,productionComplianceAuthority:false,certificateAuthority:false,legalClaim:false
   });
 }
 
@@ -154,7 +154,7 @@ export function evaluateLegalConfigurationSimulationFromS6(payload){
     };
   });
   const result=evaluateLegalConfigurationSimulation({candidate:top.candidate,weeklyEvidence:evidence});
-  return freeze({...result,sourceProvenance:'S6_REPLAY_VALIDATED',subjectId,organisationId});
+  return freeze({...result,sourceProvenance:'S6_REPLAY_VALIDATED',weekAttributionAuthority:false,weekAttributionStatus:'UNVERIFIED_SIMULATION_INPUT',subjectId,organisationId});
 }
 
 export function requireFinalLegalBlueprint(){
