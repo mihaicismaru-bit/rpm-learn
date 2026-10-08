@@ -4,6 +4,7 @@ on:
     branches:
       - s10/legal-configuration-v0.1
       - s11/certificate-gate-v0.1
+      - s12/final-ux-audio-performance-v0.1
   pull_request:
     branches:
       - s9/reports-evidence-pack-v0.1
@@ -27,10 +28,10 @@ jobs:
           set -euo pipefail
           cd canonical/s2b/v2.6
           for test in tests.mjs s2-tests.mjs pwa-contract-tests.mjs pwa-dependency-closure-tests.mjs acceptance-contract-tests.mjs browser-acceptance-static-tests.mjs s2-content-contract-tests.mjs s2-identity-scope-tests.mjs s2-role-bound-event-tests.mjs s2-time-integrity-tests.mjs s2-time-attribution-tests.mjs s2-time-source-link-tests.mjs s2-time-idle-retrocredit-tests.mjs s2-audio-lifecycle-integrity-tests.mjs s2-sequence-integrity-tests.mjs s2-sequence-allocation-tests.mjs s2-sequence-chain-quarantine-tests.mjs s2-speaking-review-gate-tests.mjs s2-event-semantic-integrity-tests.mjs s2-event-path-integrity-tests.mjs; do node "$test"; done
-      - name: S3 to S11 deterministic fail-closed and locale-regression suites
+      - name: S3 to S12 deterministic fail-closed and final-readiness suites
         run: |
           set -euo pipefail
-          for stage in s3 s4 s5 s6 s7 s8 s9 s10 s11; do
+          for stage in s3 s4 s5 s6 s7 s8 s9 s10 s11 s12; do
             while IFS= read -r -d '' test; do echo "::group::$test"; node "$test"; echo "::endgroup::"; done < <(find "canonical/$stage" -type f -name '*tests.mjs' -print0 | sort -z)
           done
       - name: Deny production and certificate authority
