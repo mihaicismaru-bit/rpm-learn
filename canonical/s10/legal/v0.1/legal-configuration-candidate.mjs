@@ -1,3 +1,5 @@
+import {buildValidatedLearningTimeLedger} from '../../../s6/time/v0.1/validated-learning-time-ledger.mjs';
+
 export const LEGAL_CONFIGURATION_CANDIDATE_VERSION=1;
 export class LegalConfigurationError extends Error{constructor(code){super(code);this.name='LegalConfigurationError';this.code=code;}}
 const fail=code=>{throw new LegalConfigurationError(code);};
@@ -105,6 +107,54 @@ export function evaluateLegalConfigurationSimulation(payload){
     totalDeficitMs:safeSum(weeks,r=>r.deficitMs),
     legalBlueprintFinal:false,productionComplianceAuthority:false,certificateAuthority:false,legalClaim:false
   });
+}
+
+function denseValues(rows,code){
+  if(!Array.isArray(rows))fail(code);
+  try{
+    if(Object.getPrototypeOf(rows)!==Array.prototype)fail(code);
+    const n=rows.length,own=Reflect.ownKeys(rows);
+    if(own.length!==n+1||!own.includes('length'))fail(code);
+    const out=[];
+    for(let i=0;i<n;i++){
+      const d=Object.getOwnPropertyDescriptor(rows,String(i));
+      if(!d||!Object.prototype.hasOwnProperty.call(d,'value'))fail(code);
+      out.push(d.value);
+    }
+    return out;
+  }catch(error){if(error instanceof LegalConfigurationError)throw error;fail(code);}
+}
+
+// Preferred S6-bound entry point. It reconstructs every S6 ledger from lesson+events;
+// no caller-declared validatedLearningTimeMs or entryCount is trusted.
+export function evaluateLegalConfigurationSimulationFromS6(payload){
+  const top=dataSnapshot(payload,['candidate','weeklySources','subjectId','organisationId'],'LEGAL_CONFIG_S6_SIMULATION_INPUT_INVALID');
+  const subjectId=req(top.subjectId,'LEGAL_CONFIG_SUBJECT_REQUIRED');
+  const organisationId=req(top.organisationId,'LEGAL_CONFIG_ORGANISATION_REQUIRED');
+  const seenSourceEvents=new Set();
+  const evidence=denseValues(top.weeklySources,'LEGAL_CONFIG_WEEKLY_S6_SOURCES_REQUIRED').map(source=>{
+    source=dataSnapshot(source,['weekLabel','lesson','events'],'LEGAL_CONFIG_WEEKLY_S6_SOURCE_SHAPE_INVALID');
+    req(source.weekLabel,'LEGAL_CONFIG_WEEK_LABEL_REQUIRED');
+    let ledger;
+    try{ledger=buildValidatedLearningTimeLedger({lesson:source.lesson,events:source.events});}
+    catch(error){fail('LEGAL_CONFIG_S6_REPLAY_INVALID');}
+    if(ledger.subjectId!==subjectId||ledger.organisationId!==organisationId)fail('LEGAL_CONFIG_S6_SCOPE_MISMATCH');
+    for(const entry of ledger.entries){
+      const key=`${ledger.lessonId}\u0000${ledger.contentVersion}\u0000${entry.timeSliceEventId}`;
+      if(seenSourceEvents.has(key))fail('LEGAL_CONFIG_S6_SOURCE_REUSE_FORBIDDEN');
+      seenSourceEvents.add(key);
+    }
+    return {
+      weekLabel:source.weekLabel,
+      validatedLearningTimeMs:ledger.validatedLearningTimeMs,
+      provenance:{
+        learningTimeLedgerVersion:ledger.ledgerVersion,
+        learningTimeEntryCount:ledger.entryCount
+      }
+    };
+  });
+  const result=evaluateLegalConfigurationSimulation({candidate:top.candidate,weeklyEvidence:evidence});
+  return freeze({...result,sourceProvenance:'S6_REPLAY_VALIDATED',subjectId,organisationId});
 }
 
 export function requireFinalLegalBlueprint(){
