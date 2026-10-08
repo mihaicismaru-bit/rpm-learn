@@ -5,6 +5,8 @@ const freeze=v=>{if(!v||typeof v!=='object'||Object.isFrozen(v))return v;for(con
 const req=(v,code)=>{if(typeof v!=='string'||!v.trim())fail(code);return v;};
 const pos=(v,code)=>{if(!Number.isSafeInteger(v)||v<=0)fail(code);return v;};
 const nonneg=(v,code)=>{if(!Number.isSafeInteger(v)||v<0)fail(code);return v;};
+// Copy own plain-data fields once, before checking their values. Accessor getters
+// can otherwise pass validation then change the simulated legal requirement.
 function dataSnapshot(input,expected,code){
   if(!input||typeof input!=='object'||Array.isArray(input))fail(code);
   try{
@@ -56,6 +58,8 @@ const safeSum=(rows,project)=>{
 };
 function assertEvidence(rows){
   if(!Array.isArray(rows))fail('LEGAL_CONFIG_WEEKLY_EVIDENCE_REQUIRED');
+  // Array#map can be shadowed; sparse arrays can falsely satisfy minimumPeriodWeeks.
+  // Capture the exact own-index descriptors before processing any evidence value.
   let source;
   try{
     if(Object.getPrototypeOf(rows)!==Array.prototype)fail('LEGAL_CONFIG_WEEKLY_EVIDENCE_SHAPE_INVALID');
@@ -81,6 +85,7 @@ function assertEvidence(rows){
   }).sort((a,b)=>a.weekLabel<b.weekLabel?-1:a.weekLabel>b.weekLabel?1:0);
 }
 export function evaluateLegalConfigurationSimulation(payload){
+  // The top-level request is also an untrusted boundary: never invoke its accessors.
   const {candidate:sourceCandidate,weeklyEvidence}=dataSnapshot(payload,['candidate','weeklyEvidence'],'LEGAL_CONFIG_SIMULATION_INPUT_INVALID');
   const candidate=assertCandidate(sourceCandidate);const rows=assertEvidence(weeklyEvidence);
   const weeks=rows.map(row=>{
