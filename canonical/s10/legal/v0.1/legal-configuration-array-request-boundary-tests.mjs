@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import {buildLegalConfigurationCandidate,evaluateLegalConfigurationSimulation,LegalConfigurationError} from './legal-configuration-candidate.mjs';
+const config={configId:'ARRAY-INTEGRITY-SYNTHETIC',configVersion:'v1',weeklyRequirementMs:100,minimumPeriodWeeks:1,recoveryAllowed:false,recoveryWindowWeeks:0,sourceAuthorityRef:'TEST-NOT-LEGAL'};
+const candidate=buildLegalConfigurationCandidate(config);
+const row={weekLabel:'2026-W40',validatedLearningTimeMs:100,provenance:{learningTimeLedgerVersion:1,learningTimeEntryCount:1}};
+const reject=(e,code)=>assert.throws(()=>evaluateLegalConfigurationSimulation(e),x=>x instanceof LegalConfigurationError&&x.code===code);
+const sparse=new Array(1);reject({candidate,weeklyEvidence:sparse},'LEGAL_CONFIG_WEEKLY_EVIDENCE_SHAPE_INVALID');
+const hijacked=[];let called=0;hijacked.map=()=>{called++;return [row]};reject({candidate,weeklyEvidence:hijacked},'LEGAL_CONFIG_WEEKLY_EVIDENCE_SHAPE_INVALID');assert.equal(called,0);
+const accessor=[row];let hits=0;Object.defineProperty(accessor,'0',{enumerable:true,configurable:true,get(){hits++;return row;}});reject({candidate,weeklyEvidence:accessor},'LEGAL_CONFIG_WEEKLY_EVIDENCE_SHAPE_INVALID');assert.equal(hits,0);
+const request={candidate,weeklyEvidence:[row]};let outerHits=0;Object.defineProperty(request,'weeklyEvidence',{enumerable:true,get(){outerHits++;return [row];}});reject(request,'LEGAL_CONFIG_SIMULATION_INPUT_INVALID');assert.equal(outerHits,0);
+const ok=evaluateLegalConfigurationSimulation({candidate,weeklyEvidence:[row]});assert.equal(ok.minimumPeriodObserved,true);assert.equal(ok.legalClaim,false);assert.equal(ok.certificateAuthority,false);assert.equal(ok.productionComplianceAuthority,false);
+console.log('RPM_S10_LEGAL_CONFIG_ARRAY_REQUEST_BOUNDARY_PASS sparse-row-fail-closed map-shadow-blocked index-getters-not-invoked request-accessors-not-invoked simulation-only');
