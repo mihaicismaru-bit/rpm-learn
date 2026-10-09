@@ -11,7 +11,7 @@ assert.equal(manifest.scope,'./');
 assert.equal(manifest.id,'./');
 assert.ok(Array.isArray(manifest.icons) && manifest.icons.some(i=>i.sizes==='192x192'));
 assert.ok(manifest.icons.some(i=>i.sizes==='512x512'));
-assert.ok(sw.includes("const CACHE='rpm-learn-s2b-v19'"),'service worker cache version must match v2.4 acceptance harness');
+assert.ok(sw.includes("const CACHE='rpm-learn-s2b-v20'"),'service worker cache version must match v2.6.2 acceptance harness');
 assert.ok(sw.includes("'./access.mjs'"),'service worker must cache access.mjs imported by app.mjs');
 assert.ok(sw.includes("'./offline.html'"),'offline fallback must be precached');
 assert.ok(sw.includes('event.request.mode === \'navigate\''),'navigation fallback missing');
