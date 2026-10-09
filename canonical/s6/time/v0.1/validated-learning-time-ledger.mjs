@@ -28,10 +28,10 @@ function sourceAttemptOrdinal(accepted,source){
     .length;
 }
 
-export function buildValidatedLearningTimeLedger({lesson,events}){
+export function buildValidatedLearningTimeLedger({lesson,events,trustedHumanReviews=[]}){
   validateLesson(lesson);
   if(!Array.isArray(events)) fail('LEARNING_TIME_EVENTS_REQUIRED');
-  const replay=analyseLearningReplay(lesson,events);
+  const replay=analyseLearningReplay(lesson,events,{trustedHumanReviews});
   if(!replay.valid) fail('LEARNING_TIME_REPLAY_INVALID',{code:replay.code,breakInfo:replay.breakInfo});
   const byId=new Map(replay.events.map(event=>[event.eventId,event]));
   const entries=[];

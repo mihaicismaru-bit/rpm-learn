@@ -80,10 +80,10 @@ function assertExistingMatches(event, lesson, request) {
   if (!ok) fail('SPEAKING_CLIENT_ID_REUSE_MISMATCH', { clientSubmissionId: request.clientSubmissionId, existingEventId: event?.eventId ?? null });
 }
 
-export function createSpeakingSubmissionDescriptor({ lesson, events, scope, itemId, mediaRef, clientSubmissionId }) {
+export function createSpeakingSubmissionDescriptor({ lesson, events, scope, itemId, mediaRef, clientSubmissionId, trustedHumanReviews = [] }) {
   assertRls07Lesson(lesson); const safeScope = assertScope(scope); assertScopedEvents(events, lesson, safeScope);
   req(itemId, 'itemId', 256); req(mediaRef, 'mediaRef'); req(clientSubmissionId, 'clientSubmissionId', 128);
-  const view = deriveLessonPlayerView(lesson, events);
+  const view = deriveLessonPlayerView(lesson, events, { trustedHumanReviews });
   if (view.status === 'INTEGRITY_BLOCKED') fail('SPEAKING_REPLAY_INTEGRITY_BLOCKED', { replayCode: view.replay?.code ?? null });
   if (view.speakingPending?.includes(itemId)) fail('SPEAKING_REVIEW_PENDING_RESUBMIT_FORBIDDEN', { itemId });
   if (view.status !== 'ACTIVE' || !view.currentItem) fail('SPEAKING_PATH_NOT_SUBMITTABLE', { status: view.status });
@@ -143,12 +143,15 @@ export function createSpeakingSubmissionService({ lesson, eventStore, scope, ses
       req(request.itemId, 'request.itemId', 256); req(request.mediaRef, 'request.mediaRef'); req(request.clientSubmissionId, 'request.clientSubmissionId', 128);
       await eventStore.open(); await eventStore.activateContent(lesson);
       const beforeEvents = await eventStore.listEvents(lesson.lessonId, lesson.contentVersion); assertScopedEvents(beforeEvents, lesson, safeScope);
-      const beforeReplay = analyseLearningReplay(lesson, beforeEvents);
+      const trustedHumanReviews = typeof eventStore.listTrustedHumanReviews === 'function'
+        ? await eventStore.listTrustedHumanReviews(lesson.lessonId, lesson.contentVersion)
+        : [];
+      const beforeReplay = analyseLearningReplay(lesson, beforeEvents, { trustedHumanReviews });
       if (!beforeReplay.valid) fail('SPEAKING_REPLAY_BEFORE_SUBMIT_INVALID', { code: beforeReplay.code });
       const existing = existingByClientId(beforeEvents, request.clientSubmissionId);
       if (existing) { assertExistingMatches(existing, lesson, request); return project(existing, 'IDEMPOTENT_REPLAY'); }
-      const beforeView = deriveLessonPlayerView(lesson, beforeEvents);
-      const descriptor = createSpeakingSubmissionDescriptor({ lesson, events: beforeEvents, scope: safeScope, ...request });
+      const beforeView = deriveLessonPlayerView(lesson, beforeEvents, { trustedHumanReviews });
+      const descriptor = createSpeakingSubmissionDescriptor({ lesson, events: beforeEvents, scope: safeScope, trustedHumanReviews, ...request });
       let persisted;
       try { persisted = await writer.appendIntent(createSpeakingSubmissionIntent(descriptor)); }
       catch (error) { fail('SPEAKING_PERSIST_FAILED', { cause: error?.code ?? error?.message ?? String(error) }); }
@@ -156,8 +159,11 @@ export function createSpeakingSubmissionService({ lesson, eventStore, scope, ses
       const readback = afterEvents.find(e => e.eventId === persisted.eventId) || null;
       if (!readback) fail('SPEAKING_PERSIST_READBACK_MISSING', { eventId: persisted.eventId });
       assertExistingMatches(readback, lesson, request);
-      const replay = analyseLearningReplay(lesson, afterEvents); if (!replay.valid) fail('SPEAKING_REPLAY_AFTER_PERSIST_INVALID', { code: replay.code });
-      const afterView = deriveLessonPlayerView(lesson, afterEvents);
+      const afterTrustedHumanReviews = typeof eventStore.listTrustedHumanReviews === 'function'
+        ? await eventStore.listTrustedHumanReviews(lesson.lessonId, lesson.contentVersion)
+        : [];
+      const replay = analyseLearningReplay(lesson, afterEvents, { trustedHumanReviews: afterTrustedHumanReviews }); if (!replay.valid) fail('SPEAKING_REPLAY_AFTER_PERSIST_INVALID', { code: replay.code });
+      const afterView = deriveLessonPlayerView(lesson, afterEvents, { trustedHumanReviews: afterTrustedHumanReviews });
       if (afterView.status !== 'AWAITING_HUMAN_REVIEW' || !afterView.speakingPending.includes(request.itemId) ||
           afterView.progress.completedItems !== beforeView.progress.completedItems || afterView.xp !== beforeView.xp ||
           afterView.activeMs !== beforeView.activeMs || !same(afterView.mastery, beforeView.mastery) || afterView.canComplete !== false) {

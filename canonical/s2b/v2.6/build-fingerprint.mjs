@@ -18,7 +18,7 @@ for(const f of files){
 const canonical=files.map(f=>`${f}\t${hashes[f]}\n`).join('');
 const payload={
   schemaVersion:'rpm-s2b-build-fingerprint/v1',
-  buildId:'RPM-S2B-BROWSER-GATE-v2.6.1',
+  buildId:'RPM-S2B-BROWSER-GATE-v2.6.2',
   combinedSha256:createHash('sha256').update(canonical).digest('hex'),
   files:hashes
 };

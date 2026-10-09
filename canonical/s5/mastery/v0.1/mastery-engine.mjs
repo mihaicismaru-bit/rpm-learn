@@ -98,7 +98,7 @@ export function deriveMasterySnapshot({ lesson, events, humanReviews = [] }) {
   if (!Array.isArray(events)) fail('MASTERY_EVENTS_REQUIRED');
   if (!Array.isArray(humanReviews)) fail('MASTERY_REVIEWS_REQUIRED');
 
-  const replay = analyseLearningReplay(lesson, events);
+  const replay = analyseLearningReplay(lesson, events, { trustedHumanReviews: humanReviews });
   if (!replay.valid) fail('MASTERY_REPLAY_INVALID', { code: replay.code, breakInfo: replay.breakInfo });
   const accepted = replay.events;
   const speakingById = new Map(accepted.filter(event => event.type === EventType.SPEAKING_SUBMITTED).map(event => [event.eventId, event]));
