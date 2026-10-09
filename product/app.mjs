@@ -11,14 +11,23 @@ import {buildReportsEvidencePack} from '../canonical/s9/reports/v0.1/reports-evi
 import {requireCertificateIssuance} from '../canonical/s11/certificate/v0.1/certificate-gate.mjs';
 
 class BrowserEventStore{
-  constructor(){this.lesson=null;this.events=[]}
+  constructor(trustedHumanReviewProvider=null){this.lesson=null;this.events=[];this.trustedHumanReviewProvider=trustedHumanReviewProvider}
+  async listTrustedHumanReviews(lessonId,contentVersion){
+    if(!this.trustedHumanReviewProvider)return [];
+    const rows=await this.trustedHumanReviewProvider({lessonId,contentVersion});
+    return Array.isArray(rows)?rows.map(x=>structuredClone(x)):[];
+  }
   async open(){return true}
   async activateContent(next){this.lesson=structuredClone(next);return {status:'initialize'}}
   async listEvents(lessonId,contentVersion){return this.events.filter(e=>e.lessonId===lessonId&&e.contentVersion===contentVersion).map(e=>structuredClone(e))}
-  async inspectSequenceChain(lessonId,contentVersion){return analyseLearningReplay(this.lesson,await this.listEvents(lessonId,contentVersion))}
+  async inspectSequenceChain(lessonId,contentVersion){
+    const [rows,trustedHumanReviews]=await Promise.all([this.listEvents(lessonId,contentVersion),this.listTrustedHumanReviews(lessonId,contentVersion)]);
+    return analyseLearningReplay(this.lesson,rows,{trustedHumanReviews})
+  }
   async append(event){
     const candidate=[...this.events,structuredClone(event)];
-    const replay=analyseLearningReplay(this.lesson,candidate);
+    const trustedHumanReviews=await this.listTrustedHumanReviews(event.lessonId,event.contentVersion);
+    const replay=analyseLearningReplay(this.lesson,candidate,{trustedHumanReviews});
     if(!replay.valid)throw Object.assign(new Error(replay.code),{code:replay.code});
     this.events=candidate;return {status:'appended',event:structuredClone(event)}
   }
@@ -32,7 +41,8 @@ class ReviewStore{
 const scope={subjectId:'learner-demo',organisationId:'org-demo',role:'LEARNER'};
 const teacher={teacherId:'teacher-demo',organisationId:'org-demo',role:'TEACHER'};
 const employer={employerId:'employer-demo',organisationId:'org-demo',role:'EMPLOYER'};
-const eventStore=new BrowserEventStore(), reviewStore=new ReviewStore();
+const reviewStore=new ReviewStore();
+const eventStore=new BrowserEventStore(async()=>reviewStore.listReviews());
 let tick=Date.now(), view=null, currentRenderedAt=performance.now(), currentRenderedWall=Date.now();
 const controller=new LessonPlayerSessionController({lesson,eventStore,scope,sessionId:'rpm-functional-demo',now:()=>++tick});
 const speaking=createSpeakingSubmissionService({lesson,eventStore,scope,sessionId:'rpm-functional-speaking',now:()=>++tick});
@@ -64,7 +74,7 @@ async function submitSpeaking(){
 }
 async function reviewSpeaking(decision){
   const all=await events();const ev=all.find(e=>e.type===EventType.SPEAKING_SUBMITTED);if(!ev)return;
-  await reviewer.review({speakingEvent:ev,clientReviewId:'functional-demo-review-e06',decision});renderAll()
+  await reviewer.review({speakingEvent:ev,clientReviewId:'functional-demo-review-e06',decision});view=await controller.refresh();renderAll()
 }
 function interactionHtml(item){
   if(!item)return '';
@@ -86,7 +96,7 @@ async function snapshots(){
 async function renderLearner(s){
   const p=s.time;const cur=view?.currentItem;
   let gap='';
-  if(s.reviews.some(r=>r.decision==='VALID')&&view?.status==='AWAITING_HUMAN_REVIEW')gap=`<div class="notice">Review profesor: VALID. Integrarea a identificat un gap real: traseul canonic încă nu consumă decizia pentru a avansa la E07. Nu simulăm avansul.</div>`;
+  if(s.reviews.some(r=>r.decision==='VALID')&&view?.currentItem?.id==='E07')gap=`<div class="notice ok">Review profesor VALID consumat prin replay provenance-bound. Traseul a fost reluat fără XP, timp valid sau autoritate legală acordată de review.</div>`;
   $('#learnerPanel').innerHTML=`<div class="card"><h1>${esc(lesson.title)}</h1><div class="meta"><span class="status">${esc(view?.status)}</span><span>RLS-07 · 16+</span></div><progress value="${view?.progress.completedItems??0}" max="${view?.progress.totalItems??8}"></progress><div class="grid"><div class="metric"><span>Progres</span><b>${view?.progress.completedItems??0}/${view?.progress.totalItems??8}</b></div><div class="metric"><span>Timp validat S6</span><b>${fmt(p.validatedLearningTimeMs)}</b></div></div></div>
   ${gap}<div class="card"><h2>${esc(cur?.prompt??(view?.status==='COMPLETED'?'Lecție terminată':'Așteptare review'))}</h2>${cur?.audioText?`<button class="action" id="audioBtn">🔊 Ascultă</button>`:''}<div id="interaction">${interactionHtml(cur)}</div></div>`;
   document.querySelectorAll('.answer').forEach(b=>b.onclick=()=>answer(b.dataset.value));
