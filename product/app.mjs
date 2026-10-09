@@ -84,6 +84,12 @@ async function reviewSpeaking(decision){
   const all=await events();const ev=all.find(e=>e.type===EventType.SPEAKING_SUBMITTED);if(!ev)return;
   await reviewer.review({speakingEvent:ev,clientReviewId:'functional-demo-review-e06',decision});view=await controller.refresh();renderAll()
 }
+async function completeLesson(){
+  view=await controller.complete();
+  await creditLatest(EventType.LESSON_COMPLETED);
+  view=await controller.refresh();
+  renderAll()
+}
 async function finalValidate(){
   const s=await snapshots();
   await validationService.validate({teacherView:s.teacherView,clientValidationId:'functional-demo-final',validationKind:'FINAL',decision:'VALID'});
@@ -110,13 +116,18 @@ async function renderLearner(s){
   const p=s.time;const cur=view?.currentItem;
   let gap='';
   if(s.reviews.some(r=>r.decision==='VALID')&&view?.currentItem?.id==='E07')gap=`<div class="notice ok">Review profesor VALID consumat prin replay provenance-bound. Traseul a fost reluat fără XP, timp valid sau autoritate legală acordată de review.</div>`;
+  const completionAction=view?.status==='READY_TO_COMPLETE'
+    ? '<button class="action primary" id="completeLesson">Finalizează lecția</button>'
+    : '';
+  const emptyState=view?.status==='COMPLETED'?'Lecție terminată':view?.status==='AWAITING_HUMAN_REVIEW'?'Așteptare review':view?.status==='READY_TO_COMPLETE'?'Toate exercițiile sunt gata':'Continuă';
   $('#learnerPanel').innerHTML=`<div class="card"><h1>${esc(lesson.title)}</h1><div class="meta"><span class="status">${esc(view?.status)}</span><span>RLS-07 · 16+</span></div><progress value="${view?.progress.completedItems??0}" max="${view?.progress.totalItems??8}"></progress><div class="grid"><div class="metric"><span>Progres</span><b>${view?.progress.completedItems??0}/${view?.progress.totalItems??8}</b></div><div class="metric"><span>Timp validat S6</span><b>${fmt(p.validatedLearningTimeMs)}</b></div></div></div>
-  ${gap}<div class="card"><h2>${esc(cur?.prompt??(view?.status==='COMPLETED'?'Lecție terminată':'Așteptare review'))}</h2>${cur?.audioText?`<button class="action" id="audioBtn">🔊 Ascultă</button>`:''}<div id="interaction">${interactionHtml(cur)}</div></div>`;
+  ${gap}<div class="card"><h2>${esc(cur?.prompt??emptyState)}</h2>${cur?.audioText?`<button class="action" id="audioBtn">🔊 Ascultă</button>`:''}<div id="interaction">${interactionHtml(cur)}</div>${completionAction}</div>`;
   document.querySelectorAll('.answer').forEach(b=>b.onclick=()=>answer(b.dataset.value));
   let picked=[];document.querySelectorAll('.token').forEach(b=>b.onclick=()=>{picked.push(b.dataset.value);$('#picked').textContent=picked.join(' ')});
   if($('#submitOrder'))$('#submitOrder').onclick=()=>answer(picked);
   if($('#submitCheckpoint'))$('#submitCheckpoint').onclick=()=>answer([...document.querySelectorAll('.row')].map((_,i)=>document.querySelector(`input[name="cp${i}"]:checked`)?.value??null));
   if($('#submitSpeaking'))$('#submitSpeaking').onclick=submitSpeaking;
+  if($('#completeLesson'))$('#completeLesson').onclick=completeLesson;
   if($('#audioBtn'))$('#audioBtn').onclick=()=>{if(!cur?.audioText||!('speechSynthesis'in window))return;const u=new SpeechSynthesisUtterance(cur.audioText);u.lang='ro-RO';u.rate=.88;speechSynthesis.cancel();speechSynthesis.speak(u)};
   currentRenderedAt=performance.now();currentRenderedWall=Date.now();
 }

@@ -7,6 +7,7 @@ on:
       - s12/final-ux-audio-performance-v0.1
       - integration/functional-product-v0.1
       - integration/review-resume-v0.1
+      - fix/product-completion-blocker-v0.2.1
   pull_request:
     branches:
       - s9/reports-evidence-pack-v0.1
@@ -40,6 +41,7 @@ jobs:
         run: |
           node product/functional-integration-tests.mjs
           node product/review-resume-security-tests.mjs
+          node product/completion-ui-contract-tests.mjs
       - name: Deny production and certificate authority
         run: |
           echo 'Simulation-only S10: Legal Blueprint FINAL not approved.'
