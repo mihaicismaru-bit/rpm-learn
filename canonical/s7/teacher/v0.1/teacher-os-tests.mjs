@@ -51,7 +51,7 @@ async function speakingFixture(){
   const view=buildTeacherLearnerView({lesson,events:eventStore.events,masterySnapshot:mastery,learningTimeLedger:time,humanReviews:reviewStore.rows,teacher});
   assert.equal(view.speakingReviewQueue[0].status,'VALID');assert.equal(view.speakingReviewQueue[0].approvalState,'APPROVED');
   const speakingSkill=view.skillProgress.find(x=>x.skill==='speaking_help');assert.equal(speakingSkill.teacherValidated,true);
-  assert.equal(view.learnerStatus,'REVIEW_RESOLVED_PATH_PENDING');
+  assert.equal(view.learnerStatus,'IN_PROGRESS');
   const validationStore=new Store('validations');
   const service=createTeacherValidationService({validationStore,teacher,now:()=>10001});
   const periodic=await service.validate({teacherView:view,clientValidationId:'periodic-1',validationKind:'PERIODIC',decision:'VALID'});
