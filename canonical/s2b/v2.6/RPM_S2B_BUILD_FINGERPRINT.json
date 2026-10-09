@@ -1,7 +1,7 @@
 {
   "schemaVersion": "rpm-s2b-build-fingerprint/v1",
   "buildId": "RPM-S2B-BROWSER-GATE-v2.6.2",
-  "combinedSha256": "a5af89ab7bba3ec9455973cbc089999827505f6ee6a7fdb90d83ac0f56213e6d",
+  "combinedSha256": "cf065781dd9e13f219eca2c483876349ae7375aafca34751520d71f100c0f530",
   "files": {
     "index.html": "1d3bd624e90d6e648a6723533ee84beca301edb3f5ae7368e1dfe25e2b8828ec",
     "offline.html": "1300ea2ead926aa38826de31c83b98b4812cbcddbb83d1b5baa840f7ef993c56",
@@ -14,12 +14,12 @@
     "manifest.webmanifest": "14997015c83901aa59fc3b6c7a9b5cce10af834632880118361f5d21d1e24e6c",
     "icon-192.png": "c661db829d4f5688926925b02311ab9de0ae4960c3de1b73a22c02127e3daf89",
     "icon-512.png": "81361b3985fd938ed7ed35bb4fbd50cc2879a6ce523b83d80f92caa35cb33fa6",
-    "browser-acceptance.html": "cee3b4aa5a8262698614281ce6e101c924ab4fca907052340176649d304e605c",
+    "browser-acceptance.html": "2c69a4940abac201fe78eecb58c42202bfd6176ba57e17fb79fdeac14d314d89",
     "browser-acceptance-runner.mjs": "73926eb9c1fdd6874c5ece5e83947c1cc75d3bef19936c5548c9566907c30b5b",
     "browser-acceptance-static-tests.mjs": "37b1c518df3be3ab5209991e5cb4f1902beace2a74bdcf7bbc3f5a08d288936c",
     "acceptance-contract.mjs": "93b1a7da544f86237a1f7cd3138f366f8c6d7137fe4d7dc6d1734d81f617c588",
     "acceptance-contract-tests.mjs": "03a1baf032d16ca572c9d2631d2b2eaf0b842b6f7143429755e565dfb1bcafa6",
-    "pwa-contract-tests.mjs": "1cd7c7bc11b82144f04e42a7f47dd111cbd494f384dfdd0e093c9c6d6787429c",
+    "pwa-contract-tests.mjs": "b6753e27949249d1dde4ba838a9b07bbde34ce3da161a9b5b19f0263bc2dd898",
     "pwa-dependency-closure-tests.mjs": "5be780092f71f3c6d01a73bf8b469f67f57e931b72949ed5c48f4bd6ea1a11dc",
     "s2-tests.mjs": "b193fddab35b764d49392381a028cb5bfc1834949a18a0538f00b7f34d22279e",
     "s2-identity-scope-tests.mjs": "55ca440ad3acd152cab92117aaf3c77ccfb900afa14fbdbfd394ebe3fe220941",
