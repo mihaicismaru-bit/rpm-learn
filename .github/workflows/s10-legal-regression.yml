@@ -6,6 +6,7 @@ on:
       - s11/certificate-gate-v0.1
       - s12/final-ux-audio-performance-v0.1
       - integration/functional-product-v0.1
+      - integration/review-resume-v0.1
   pull_request:
     branches:
       - s9/reports-evidence-pack-v0.1
@@ -38,6 +39,7 @@ jobs:
       - name: RPM functional product integration
         run: |
           node product/functional-integration-tests.mjs
+          node product/review-resume-security-tests.mjs
       - name: Deny production and certificate authority
         run: |
           echo 'Simulation-only S10: Legal Blueprint FINAL not approved.'
