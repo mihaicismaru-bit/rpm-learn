@@ -5,7 +5,7 @@ import {createSpeakingSubmissionService} from '../canonical/s4/speaking/v0.1/spe
 import {createHumanReviewBridgeService} from '../canonical/s4/review/v0.1/human-review-bridge.mjs';
 import {deriveMasterySnapshot} from '../canonical/s5/mastery/v0.1/mastery-engine.mjs';
 import {buildValidatedLearningTimeLedger} from '../canonical/s6/time/v0.1/validated-learning-time-ledger.mjs';
-import {buildTeacherLearnerView} from '../canonical/s7/teacher/v0.1/teacher-os.mjs';
+import {buildTeacherLearnerView,createTeacherValidationService} from '../canonical/s7/teacher/v0.1/teacher-os.mjs';
 import {buildEmployerLearnerView} from '../canonical/s8/employer/v0.1/employer-os.mjs';
 import {buildReportsEvidencePack} from '../canonical/s9/reports/v0.1/reports-evidence-pack.mjs';
 import {requireCertificateIssuance} from '../canonical/s11/certificate/v0.1/certificate-gate.mjs';
@@ -38,15 +38,23 @@ class ReviewStore{
   async listReviews(){return this.rows.map(x=>structuredClone(x))}
   async appendReview(record){const old=this.rows.find(x=>x.reviewId===record.reviewId);if(old)return {status:'duplicate',record:structuredClone(old)};this.rows.push(structuredClone(record));return {status:'appended',record:structuredClone(record)}}
 }
+class ValidationStore{
+  constructor(){this.rows=[]}
+  async open(){}
+  async listValidations(){return this.rows.map(x=>structuredClone(x))}
+  async appendValidation(record){const old=this.rows.find(x=>x.validationId===record.validationId);if(old)return {status:'duplicate',record:structuredClone(old)};this.rows.push(structuredClone(record));return {status:'appended',record:structuredClone(record)}}
+}
 const scope={subjectId:'learner-demo',organisationId:'org-demo',role:'LEARNER'};
 const teacher={teacherId:'teacher-demo',organisationId:'org-demo',role:'TEACHER'};
 const employer={employerId:'employer-demo',organisationId:'org-demo',role:'EMPLOYER'};
 const reviewStore=new ReviewStore();
+const validationStore=new ValidationStore();
 const eventStore=new BrowserEventStore(async()=>reviewStore.listReviews());
 let tick=Date.now(), view=null, currentRenderedAt=performance.now(), currentRenderedWall=Date.now();
 const controller=new LessonPlayerSessionController({lesson,eventStore,scope,sessionId:'rpm-functional-demo',now:()=>++tick});
 const speaking=createSpeakingSubmissionService({lesson,eventStore,scope,sessionId:'rpm-functional-speaking',now:()=>++tick});
 const reviewer=createHumanReviewBridgeService({reviewStore,reviewer:{reviewerId:teacher.teacherId,organisationId:teacher.organisationId,role:'TEACHER'},now:()=>++tick});
+const validationService=createTeacherValidationService({validationStore,teacher,now:()=>++tick});
 
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
@@ -76,6 +84,11 @@ async function reviewSpeaking(decision){
   const all=await events();const ev=all.find(e=>e.type===EventType.SPEAKING_SUBMITTED);if(!ev)return;
   await reviewer.review({speakingEvent:ev,clientReviewId:'functional-demo-review-e06',decision});view=await controller.refresh();renderAll()
 }
+async function finalValidate(){
+  const s=await snapshots();
+  await validationService.validate({teacherView:s.teacherView,clientValidationId:'functional-demo-final',validationKind:'FINAL',decision:'VALID'});
+  renderAll()
+}
 function interactionHtml(item){
   if(!item)return '';
   if(['listen_choose','scenario_choose','read_choose'].includes(item.type))return item.choices.map(c=>`<button class="action answer" data-value="${esc(c)}">${esc(c)}</button>`).join('');
@@ -85,13 +98,13 @@ function interactionHtml(item){
   return '';
 }
 async function snapshots(){
-  const all=await events(), reviews=await reviewStore.listReviews();
+  const all=await events(), reviews=await reviewStore.listReviews(), teacherValidations=await validationStore.listValidations();
   const mastery=deriveMasterySnapshot({lesson,events:all,humanReviews:reviews});
   const time=buildValidatedLearningTimeLedger({lesson,events:all});
   const teacherView=buildTeacherLearnerView({lesson,events:all,masterySnapshot:mastery,learningTimeLedger:time,humanReviews:reviews,teacher});
-  const employerView=buildEmployerLearnerView({teacherView,teacherValidations:[],reportIndex:[],employer});
-  const reports=buildReportsEvidencePack({teacherView,employerView,teacherValidations:[],period:{generatedAt:Date.now(),weekLabel:'DEMO-WEEK',monthLabel:'DEMO-MONTH'}});
-  return {all,reviews,mastery,time,teacherView,employerView,reports};
+  const employerView=buildEmployerLearnerView({teacherView,teacherValidations,reportIndex:[],employer});
+  const reports=buildReportsEvidencePack({teacherView,employerView,teacherValidations,period:{generatedAt:Date.now(),weekLabel:'DEMO-WEEK',monthLabel:'DEMO-MONTH'}});
+  return {all,reviews,teacherValidations,mastery,time,teacherView,employerView,reports};
 }
 async function renderLearner(s){
   const p=s.time;const cur=view?.currentItem;
@@ -109,9 +122,11 @@ async function renderLearner(s){
 }
 async function renderTeacher(s){
   const t=s.teacherView,q=t.speakingReviewQueue;
-  $('#teacherPanel').innerHTML=`<div class="card"><h1>Teacher OS</h1><div class="grid"><div class="metric"><span>Learner status</span><b>${esc(t.learnerStatus)}</b></div><div class="metric"><span>Timp validat</span><b>${fmt(t.validatedLearningTimeMs)}</b></div></div><h3>Speaking review queue</h3><div class="list">${q.length?q.map(x=>`<div class="row"><b>${esc(x.itemId)}</b> · ${esc(x.status)}${x.status==='PENDING'?'<button class="action primary" id="approveSpeaking">VALID</button><button class="action" id="retrySpeaking">RETRY</button>':''}</div>`).join(''):'<div class="row">Nicio trimitere.</div>'}</div><h3>Mastery</h3><div class="list">${t.skillProgress.map(x=>`<div class="row">${esc(x.skill)} · <b>${esc(x.state)}</b>${x.teacherValidated?' · teacher validated':''}</div>`).join('')}</div></div>`;
+  const finalDone=s.teacherValidations.some(x=>x.validationKind==='FINAL'&&x.decision==='VALID');
+  $('#teacherPanel').innerHTML=`<div class="card"><h1>Teacher OS</h1><div class="grid"><div class="metric"><span>Learner status</span><b>${esc(t.learnerStatus)}</b></div><div class="metric"><span>Timp validat</span><b>${fmt(t.validatedLearningTimeMs)}</b></div></div><h3>Speaking review queue</h3><div class="list">${q.length?q.map(x=>`<div class="row"><b>${esc(x.itemId)}</b> · ${esc(x.status)}${x.status==='PENDING'?'<button class="action primary" id="approveSpeaking">VALID</button><button class="action" id="retrySpeaking">RETRY</button>':''}</div>`).join(''):'<div class="row">Nicio trimitere.</div>'}</div>${t.learnerStatus==='COMPLETED'&&!finalDone?'<h3>Final path validation</h3><button class="action primary" id="finalValidate">FINAL VALID</button>':''}${finalDone?'<div class="notice ok">Final path VALID — human validated. Certificate issuance remains legal-gated.</div>':''}<h3>Mastery</h3><div class="list">${t.skillProgress.map(x=>`<div class="row">${esc(x.skill)} · <b>${esc(x.state)}</b>${x.teacherValidated?' · teacher validated':''}</div>`).join('')}</div></div>`;
   if($('#approveSpeaking'))$('#approveSpeaking').onclick=()=>reviewSpeaking('VALID');
   if($('#retrySpeaking'))$('#retrySpeaking').onclick=()=>reviewSpeaking('RETRY');
+  if($('#finalValidate'))$('#finalValidate').onclick=finalValidate;
 }
 async function renderEmployer(s){
   const e=s.employerView,r=s.reports;let certCode='';
