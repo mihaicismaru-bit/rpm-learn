@@ -15,3 +15,5 @@ This integration closes the visible E06 human-review resume gap without granting
 - Certificate issuance remains fail-closed pending final legal approval.
 
 Fingerprint regeneration diagnostic is branch-only and cannot count as PASS; exact successor values must be persisted before promotion.
+
+Successor v2.6.2 final identity includes cache-v20 acceptance + PWA contract alignment; awaiting exact hosted fingerprint persistence.
