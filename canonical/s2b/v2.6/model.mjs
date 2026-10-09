@@ -525,6 +525,57 @@ export function validateEventSemantics(lesson, event, { state = null, eventById 
   return { valid: true, code: 'EVENT_SEMANTIC_PASS', semanticPolicyVersion: EVENT_SEMANTIC_POLICY_VERSION };
 }
 
+const TRUSTED_HUMAN_REVIEW_KEYS = Object.freeze(['humanReviewBridgeVersion','reviewId','clientReviewId','speakingEventId','speakingEventSeq','learnerSubjectId','organisationId','reviewerId','reviewerRole','decision','approvalState','reviewedAt','lessonId','contentVersion','itemId','sourceLane','sourceObserved','sourceArtifactIds','submissionClientId','reviewPolicy','authority']);
+const TRUSTED_HUMAN_REVIEW_AUTHORITY_KEYS = Object.freeze(['pathAdvance','xp','mastery','validatedTime','certificate','legal']);
+
+function trustedReviewExactKeys(value, expected) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const actual = Object.keys(value).sort();
+  const wanted = [...expected].sort();
+  return actual.length === wanted.length && actual.every((key,index)=>key===wanted[index]);
+}
+
+function validateTrustedHumanReview(record, speakingEvent) {
+  if (!trustedReviewExactKeys(record, TRUSTED_HUMAN_REVIEW_KEYS)) return { valid:false, code:'TRUSTED_HUMAN_REVIEW_SHAPE_INVALID' };
+  if (!trustedReviewExactKeys(record.authority, TRUSTED_HUMAN_REVIEW_AUTHORITY_KEYS)) return { valid:false, code:'TRUSTED_HUMAN_REVIEW_AUTHORITY_SHAPE_INVALID' };
+  if (record.humanReviewBridgeVersion !== 1 || record.reviewerRole !== 'TEACHER' || !['VALID','RETRY','NEEDS_SUPPORT'].includes(record.decision)) return { valid:false, code:'TRUSTED_HUMAN_REVIEW_CONTRACT_INVALID' };
+  if (record.approvalState !== (record.decision === 'VALID' ? 'APPROVED' : 'REJECTED')) return { valid:false, code:'TRUSTED_HUMAN_REVIEW_APPROVAL_INVALID' };
+  if (record.sourceLane !== 'RLS-07' || record.reviewPolicy !== 'HUMAN_REVIEW_REQUIRED') return { valid:false, code:'TRUSTED_HUMAN_REVIEW_POLICY_INVALID' };
+  if (!Number.isInteger(record.speakingEventSeq) || record.speakingEventSeq < 1 || !Number.isInteger(record.reviewedAt) || record.reviewedAt < 1) return { valid:false, code:'TRUSTED_HUMAN_REVIEW_SEQUENCE_TIME_INVALID' };
+  if (Object.values(record.authority).some(value=>value!==false)) return { valid:false, code:'TRUSTED_HUMAN_REVIEW_AUTHORITY_ESCALATION' };
+  if (!speakingEvent || speakingEvent.type !== EventType.SPEAKING_SUBMITTED) return { valid:false, code:'TRUSTED_HUMAN_REVIEW_SOURCE_MISSING' };
+  const p=speakingEvent.payload||{};
+  const same = record.speakingEventId===speakingEvent.eventId
+    && record.speakingEventSeq===speakingEvent.seq
+    && record.learnerSubjectId===speakingEvent.subjectId
+    && record.organisationId===speakingEvent.organisationId
+    && record.lessonId===speakingEvent.lessonId
+    && record.contentVersion===speakingEvent.contentVersion
+    && record.itemId===speakingEvent.itemId
+    && record.submissionClientId===p.clientSubmissionId
+    && record.sourceObserved===p.sourceObserved
+    && JSON.stringify([...(record.sourceArtifactIds||[])].sort())===JSON.stringify([...(p.sourceArtifactIds||[])].sort());
+  return same ? {valid:true,code:'TRUSTED_HUMAN_REVIEW_PASS'} : {valid:false,code:'TRUSTED_HUMAN_REVIEW_PROVENANCE_MISMATCH'};
+}
+
+function applyTrustedHumanReviewForSpeaking(lesson,state,speakingEvent,trustedHumanReviews,consumedReviewIds) {
+  if (!Array.isArray(trustedHumanReviews) || trustedHumanReviews.length===0) return {valid:true,code:'NO_TRUSTED_HUMAN_REVIEW'};
+  const matches=trustedHumanReviews.filter(record=>record?.speakingEventId===speakingEvent.eventId && !consumedReviewIds.has(record?.reviewId));
+  if (matches.length===0) return {valid:true,code:'NO_TRUSTED_HUMAN_REVIEW'};
+  if (matches.length!==1) return {valid:false,code:'TRUSTED_HUMAN_REVIEW_DUPLICATE'};
+  const record=matches[0];
+  const check=validateTrustedHumanReview(record,speakingEvent);
+  if(!check.valid)return check;
+  consumedReviewIds.add(record.reviewId);
+  state.speakingPending=state.speakingPending.filter(itemId=>itemId!==speakingEvent.itemId);
+  if(record.decision==='VALID'){
+    const idx=lesson.items.findIndex(item=>item.id===speakingEvent.itemId);
+    if(idx<0)return {valid:false,code:'TRUSTED_HUMAN_REVIEW_ITEM_NOT_FOUND'};
+    state.cursor=Math.max(state.cursor,idx+1);
+  }
+  return {valid:true,code:record.decision==='VALID'?'TRUSTED_HUMAN_REVIEW_VALID_APPLIED':'TRUSTED_HUMAN_REVIEW_RETRY_APPLIED',reviewId:record.reviewId,decision:record.decision};
+}
+
 function applyAcceptedEventToState(lesson, state, ev, creditedTimeSources, closedAudioStartIds) {
   if (ev.type === EventType.ITEM_ANSWERED) {
     const attempts = state.attempts[ev.itemId] ?? 0;
@@ -557,7 +608,7 @@ function applyAcceptedEventToState(lesson, state, ev, creditedTimeSources, close
   if (state.cursor >= lesson.items.length) state.cursor = lesson.items.length;
 }
 
-export function analyseLearningReplay(lesson, events) {
+export function analyseLearningReplay(lesson, events, { trustedHumanReviews = [] } = {}) {
   const ordered = [...events]
     .filter(ev => ev?.lessonId === lesson.lessonId && ev?.contentVersion === lesson.contentVersion)
     .sort((a, b) => a.seq - b.seq || a.ts - b.ts || String(a.eventId).localeCompare(String(b.eventId)));
@@ -566,6 +617,7 @@ export function analyseLearningReplay(lesson, events) {
   const eventById = new Map();
   const creditedTimeSources = new Set();
   const closedAudioStartIds = new Set();
+  const consumedReviewIds = new Set();
   let expectedSeq = 1;
   let breakInfo = null;
 
@@ -584,6 +636,10 @@ export function analyseLearningReplay(lesson, events) {
     applyAcceptedEventToState(lesson, state, ev, creditedTimeSources, closedAudioStartIds);
     accepted.push(ev);
     eventById.set(ev.eventId, ev);
+    if (ev.type === EventType.SPEAKING_SUBMITTED) {
+      const reviewResolution = applyTrustedHumanReviewForSpeaking(lesson,state,ev,trustedHumanReviews,consumedReviewIds);
+      if (!reviewResolution.valid) { breakInfo = { ...reviewResolution, eventId: ev.eventId }; break; }
+    }
     expectedSeq += 1;
   }
 
@@ -599,6 +655,7 @@ export function analyseLearningReplay(lesson, events) {
     quarantinedEventIds: quarantined.map(ev => ev?.eventId || null),
     creditedTimeSourceIds: [...creditedTimeSources],
     closedAudioStartEventIds: [...closedAudioStartIds],
+    consumedHumanReviewIds: [...consumedReviewIds].sort(),
     breakInfo,
     semanticPolicyVersion: EVENT_SEMANTIC_POLICY_VERSION
   };

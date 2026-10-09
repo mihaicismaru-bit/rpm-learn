@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 const root=path.dirname(fileURLToPath(import.meta.url));
 const fp=JSON.parse(fs.readFileSync(path.join(root,'RPM_S2B_BUILD_FINGERPRINT.json'),'utf8'));
 assert.equal(fp.schemaVersion,'rpm-s2b-build-fingerprint/v1');
-assert.equal(fp.buildId,'RPM-S2B-BROWSER-GATE-v2.6.1');
+assert.equal(fp.buildId,'RPM-S2B-BROWSER-GATE-v2.6.2');
 const names=Object.keys(fp.files||{});
 assert.ok(names.length>0,'fingerprint file set must not be empty');
 for(const f of names){

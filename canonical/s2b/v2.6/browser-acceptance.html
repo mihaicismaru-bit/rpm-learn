@@ -256,8 +256,8 @@ async function main() {
   assert(!!reg.active || !!reg.waiting || !!reg.installing, 'service-worker-registration');
 
   const cacheNames = await caches.keys();
-  assert(cacheNames.includes('rpm-learn-s2b-v19'), 'pwa-cache-present');
-  const cache = await caches.open('rpm-learn-s2b-v19');
+  assert(cacheNames.includes('rpm-learn-s2b-v20'), 'pwa-cache-present');
+  const cache = await caches.open('rpm-learn-s2b-v20');
   for (const asset of ['./index.html','./offline.html','./app.mjs','./access.mjs','./model.mjs','./event-store.mjs','./fixture.mjs','./manifest.webmanifest']) {
     assert(!!(await cache.match(asset)), `precache-${asset}`);
   }

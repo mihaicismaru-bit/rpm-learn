@@ -77,9 +77,25 @@ function validateScope(scope) {
 }
 
 export class EventStore {
-  constructor(scope) {
+  constructor(scope, { trustedHumanReviewProvider = null } = {}) {
     this.db = null;
     this.scope = validateScope(scope);
+    if (trustedHumanReviewProvider !== null && typeof trustedHumanReviewProvider !== 'function') {
+      throw new EventScopeError('TRUSTED_HUMAN_REVIEW_PROVIDER_INVALID');
+    }
+    this.trustedHumanReviewProvider = trustedHumanReviewProvider;
+  }
+
+  async listTrustedHumanReviews(lessonId, contentVersion) {
+    if (!this.trustedHumanReviewProvider) return [];
+    const rows = await this.trustedHumanReviewProvider({
+      organisationId: this.scope.organisationId,
+      subjectId: this.scope.subjectId,
+      lessonId,
+      contentVersion
+    });
+    if (!Array.isArray(rows)) throw new EventScopeError('TRUSTED_HUMAN_REVIEW_PROVIDER_RESULT_INVALID');
+    return rows.map(row => structuredClone(row));
   }
 
   async open() {
@@ -192,6 +208,7 @@ export class EventStore {
     this.assertEventScope(event);
     const lesson = await this.getContent(event.lessonId, event.contentVersion);
     if (!lesson) throw new ContentVersionError('CONTENT_NOT_ACTIVATED', { lessonId: event.lessonId, contentVersion: event.contentVersion });
+    const trustedHumanReviews = await this.listTrustedHumanReviews(event.lessonId, event.contentVersion);
     const db = await this.open();
     return await new Promise((resolve, reject) => {
       const tx = db.transaction(STORE_EVENTS, 'readwrite');
@@ -226,7 +243,7 @@ export class EventStore {
             ]);
             chainReq.onerror = () => fail(chainReq.error);
             chainReq.onsuccess = () => {
-            const chainState = analyseLearningReplay(lesson, chainReq.result || []);
+            const chainState = analyseLearningReplay(lesson, chainReq.result || [], { trustedHumanReviews });
             const afterPredecessor = (predecessor = null) => {
               const continueAppend = (sourceEvent = null, existingTimeForSource = null) => {
                 const decision = classifyAppend(event, {
@@ -352,7 +369,8 @@ export class EventStore {
       this.getContent(lessonId, contentVersion)
     ]);
     if (!lesson) throw new ContentVersionError('CONTENT_NOT_ACTIVATED', { lessonId, contentVersion });
-    return analyseLearningReplay(lesson, rows);
+    const trustedHumanReviews = await this.listTrustedHumanReviews(lessonId, contentVersion);
+    return analyseLearningReplay(lesson, rows, { trustedHumanReviews });
   }
 
   async putSnapshot(snapshot) {

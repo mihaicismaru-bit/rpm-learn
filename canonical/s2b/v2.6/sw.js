@@ -1,4 +1,4 @@
-const CACHE='rpm-learn-s2b-v19';
+const CACHE='rpm-learn-s2b-v20';
 const PREFIX='rpm-learn-';
 const ASSETS=[
   './',

@@ -60,7 +60,7 @@ function assessmentSummary(lesson,events){
 export function buildTeacherLearnerView({lesson,events,masterySnapshot,learningTimeLedger,humanReviews=[],teacher}){
   assertLesson(lesson);const safeTeacher=assertTeacher(teacher);
   if(!Array.isArray(events))fail('TEACHER_OS_EVENTS_REQUIRED');
-  const replay=analyseLearningReplay(lesson,events);if(!replay.valid)fail('TEACHER_OS_REPLAY_INVALID',{code:replay.code});
+  const replay=analyseLearningReplay(lesson,events,{trustedHumanReviews:humanReviews});if(!replay.valid)fail('TEACHER_OS_REPLAY_INVALID',{code:replay.code});
   const learnerOrganisationId=replay.events[0]?.organisationId??safeTeacher.organisationId;
   const learnerSubjectId=replay.events[0]?.subjectId??null;
   if(learnerOrganisationId!==safeTeacher.organisationId)fail('TEACHER_OS_CROSS_TENANT_FORBIDDEN');
