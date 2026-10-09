@@ -100,7 +100,7 @@ function interactionHtml(item){
 async function snapshots(){
   const all=await events(), reviews=await reviewStore.listReviews(), teacherValidations=await validationStore.listValidations();
   const mastery=deriveMasterySnapshot({lesson,events:all,humanReviews:reviews});
-  const time=buildValidatedLearningTimeLedger({lesson,events:all});
+  const time=buildValidatedLearningTimeLedger({lesson,events:all,trustedHumanReviews:reviews});
   const teacherView=buildTeacherLearnerView({lesson,events:all,masterySnapshot:mastery,learningTimeLedger:time,humanReviews:reviews,teacher});
   const employerView=buildEmployerLearnerView({teacherView,teacherValidations,reportIndex:[],employer});
   const reports=buildReportsEvidencePack({teacherView,employerView,teacherValidations,period:{generatedAt:Date.now(),weekLabel:'DEMO-WEEK',monthLabel:'DEMO-MONTH'}});
