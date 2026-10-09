@@ -41,11 +41,14 @@ export class LessonPlayerSessionController {
     if (!lesson || !sessionId) throw new LessonPlayerSessionError('SESSION_CONTROLLER_CONFIG_INVALID');
     this.lesson = lesson; this.eventStore = eventStore; this.sessionId = sessionId;
     this.writer = new EventStoreSessionWriter({ eventStore, lesson, scope, sessionId, now });
-    this.events = Object.freeze([]); this.view = null; this.started = false;
+    this.events = Object.freeze([]); this.trustedHumanReviews = Object.freeze([]); this.view = null; this.started = false;
   }
   async refresh() {
     this.events = Object.freeze([...(await this.eventStore.listEvents(this.lesson.lessonId, this.lesson.contentVersion))]);
-    this.view = deriveLessonPlayerView(this.lesson, this.events);
+    this.trustedHumanReviews = Object.freeze(typeof this.eventStore.listTrustedHumanReviews === 'function'
+      ? [...(await this.eventStore.listTrustedHumanReviews(this.lesson.lessonId, this.lesson.contentVersion))]
+      : []);
+    this.view = deriveLessonPlayerView(this.lesson, this.events, { trustedHumanReviews: this.trustedHumanReviews });
     return this.view;
   }
   async start() {
@@ -62,13 +65,13 @@ export class LessonPlayerSessionController {
   }
   async answer(itemId, response) {
     if (!this.started) throw new LessonPlayerSessionError('SESSION_NOT_STARTED');
-    const intent = planAnswerIntent(this.lesson, this.events, itemId, response);
+    const intent = planAnswerIntent(this.lesson, this.events, itemId, response, { trustedHumanReviews: this.trustedHumanReviews });
     await this.writer.appendIntent(intent);
     return this.refresh();
   }
   async complete() {
     if (!this.started) throw new LessonPlayerSessionError('SESSION_NOT_STARTED');
-    const intent = planCompletionIntent(this.lesson, this.events);
+    const intent = planCompletionIntent(this.lesson, this.events, { trustedHumanReviews: this.trustedHumanReviews });
     await this.writer.appendIntent(intent);
     return this.refresh();
   }
