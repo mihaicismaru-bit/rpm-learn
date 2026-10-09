@@ -13,3 +13,5 @@ This integration closes the visible E06 human-review resume gap without granting
 - Existing replay behavior is unchanged when no trusted review provider is supplied.
 - Functional product flow now targets Learner -> Speaking -> Teacher VALID -> E07/E08 -> Completion -> Teacher FINAL VALID -> Employer/Reports.
 - Certificate issuance remains fail-closed pending final legal approval.
+
+Fingerprint regeneration diagnostic is branch-only and cannot count as PASS; exact successor values must be persisted before promotion.
