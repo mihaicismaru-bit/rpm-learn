@@ -39,7 +39,7 @@ assert.equal(view.status,'READY_TO_COMPLETE');
 view=await controller.complete();
 assert.equal(view.status,'COMPLETED');
 const mastery=deriveMasterySnapshot({lesson,events:eventStore.events,humanReviews:reviews.rows});
-const time=buildValidatedLearningTimeLedger({lesson,events:eventStore.events});
+const time=buildValidatedLearningTimeLedger({lesson,events:eventStore.events,trustedHumanReviews:reviews.rows});
 const teacherView=buildTeacherLearnerView({lesson,events:eventStore.events,masterySnapshot:mastery,learningTimeLedger:time,humanReviews:reviews.rows,teacher});
 assert.equal(teacherView.speakingReviewQueue[0].status,'VALID');
 assert.equal(teacherView.learnerStatus,'COMPLETED');
