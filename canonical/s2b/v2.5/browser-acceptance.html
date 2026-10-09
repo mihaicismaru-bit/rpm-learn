@@ -1,0 +1,277 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>RPM LEARN S2B Browser Acceptance</title>
+<meta name="robots" content="noindex,nofollow">
+<h1>RPM LEARN S2B Browser Acceptance</h1>
+<pre id="result">RUNNING</pre>
+<script type="module">
+import { lesson } from './fixture.mjs';
+import { EventStore, EventConflictError, EventScopeError, EventPolicyError, ContentVersionError } from './event-store.mjs';
+import { EventType, makeEvent, makeTimeSlicePayload, reduceLessonState, analyseLearningReplay, nextSequenceCandidate, commitPersistedSequence, EVENT_POLICY_VERSION, EVENT_SEQUENCE_POLICY_VERSION, EVENT_SEMANTIC_POLICY_VERSION, LESSON_CONTENT_POLICY_VERSION, validateLessonContentContract } from './model.mjs';
+import { Role, createDevSession, assertLearnerSession, routeDecision, employerCanSee, Capability, accessScopeForSession, assertTenantBoundary } from './access.mjs';
+import { ACCEPTANCE_CONTRACT_VERSION } from './acceptance-contract.mjs';
+
+const out = document.querySelector('#result');
+const checks = [];
+const pass = (name) => checks.push(name);
+const assert = (ok, name) => { if (!ok) throw new Error(name); pass(name); };
+const learnerSession = createDevSession(Role.LEARNER,{subjectId:'browser-learner',organisationId:'browser-org'});
+const accessScope = accessScopeForSession(learnerSession);
+const event = (seq, id, type, itemId=null, payload={}) => makeEvent({
+  type, lessonId:lesson.lessonId, contentVersion:lesson.contentVersion,
+  seq, itemId, payload, ts:1000+seq*1000, sessionId:'browser-s2b', eventId:id, ...accessScope
+});
+
+
+async function rawInjectEventForCorruptionTest(ev) {
+  const db = await new Promise((resolve,reject)=>{
+    const req=indexedDB.open('rpm-learn-s1c',4);
+    req.onerror=()=>reject(req.error); req.onsuccess=()=>resolve(req.result);
+  });
+  await new Promise((resolve,reject)=>{
+    const tx=db.transaction('events','readwrite');
+    tx.oncomplete=resolve; tx.onerror=()=>reject(tx.error); tx.onabort=()=>reject(tx.error||new Error('raw corruption-test tx aborted'));
+    tx.objectStore('events').add(ev);
+  });
+  db.close();
+}
+
+async function main() {
+  // 1) IndexedDB/event-store recovery + conflict/idempotency guards.
+  await EventStore.deleteDatabaseForTest();
+  const store = new EventStore(accessScope);
+  await store.open();
+  const contract = validateLessonContentContract(lesson);
+  assert(contract.valid && contract.lane === 'RLS-07' && contract.audience === '16+' && LESSON_CONTENT_POLICY_VERSION === 1, 'adult-lesson-content-contract');
+  let childSourceBlocked = false;
+  try { await store.activateContent({...structuredClone(lesson), lessonId:'RLS04-P0-HELP-01', contentVersion:'rpm-rls04-p0-help-01@0.1.0', source:{...lesson.source,lane:'RLS-04',audience:'11–15'}}); }
+  catch (err) { childSourceBlocked = err instanceof ContentVersionError && err.code === 'LESSON_CONTENT_CONTRACT_INVALID' && err.detail?.code === 'LESSON_SOURCE_LANE_NOT_AUTHORIZED_ADULT'; }
+  assert(childSourceBlocked, 'child-adolescent-source-lane-blocked');
+  const activation = await store.activateContent(lesson);
+  assert(['initialize','reuse'].includes(activation.status), 'content-activation');
+
+  const e1 = event(1,'s2b-e1',EventType.ITEM_ANSWERED,'E01',{response:'Nu înțeleg.',correct:true,humanReviewRequired:false,advance:true});
+  assert((await store.append(e1)).status === 'appended', 'event-first-append');
+  assert((await store.append(structuredClone(e1))).status === 'duplicate', 'event-idempotent-retry');
+
+  let forgedScoreBlocked = false;
+  try { await store.append(event(2,'s2b-forged-score',EventType.ITEM_ANSWERED,'E02',{response:'Am terminat.',correct:true,humanReviewRequired:false,advance:true})); }
+  catch (err) { forgedScoreBlocked = err instanceof EventPolicyError && err.code === 'ANSWER_SCORE_MISMATCH'; }
+  assert(forgedScoreBlocked, 'forged-answer-score-blocked');
+
+  let futureItemBlocked = false;
+  try { await store.append(event(2,'s2b-future-item',EventType.ITEM_ANSWERED,'E08',{response:['Nu înțeleg.','Repetați, vă rog.','Am terminat.'],correct:true,humanReviewRequired:false,advance:true})); }
+  catch (err) { futureItemBlocked = err instanceof EventPolicyError && err.code === 'EVENT_ITEM_PATH_MISMATCH'; }
+  assert(futureItemBlocked, 'future-item-answer-path-blocked');
+
+  let futureSpeakingBlocked = false;
+  try { await store.append(event(2,'s2b-future-speaking',EventType.SPEAKING_SUBMITTED,'E06',{teacherReviewRequired:true,placeholder:true})); }
+  catch (err) { futureSpeakingBlocked = err instanceof EventPolicyError && err.code === 'EVENT_ITEM_PATH_MISMATCH'; }
+  assert(futureSpeakingBlocked, 'future-speaking-path-blocked');
+  assert(EVENT_SEMANTIC_POLICY_VERSION === 4, 'semantic-path-policy-v4');
+  assert(EVENT_POLICY_VERSION === 4, 'time-policy-v4');
+  const idleGap = makeTimeSlicePayload({previousMono:0,currentMono:60000,previousWall:0,currentWall:60000,foreground:true,basis:'meaningful_interaction',sourceEventType:EventType.ITEM_ANSWERED,sourceEventId:'idle-source',sourceEventSeq:1});
+  assert(idleGap.durationMs === 0 && idleGap.idleGapSuppressed === true, 'idle-gap-retrocredit-suppressed');
+  const continuousAudio = makeTimeSlicePayload({previousMono:0,currentMono:60000,previousWall:0,currentWall:60000,foreground:true,basis:'audio_playback',sourceEventType:EventType.AUDIO_ENDED,sourceEventId:'audio-source',sourceEventSeq:1});
+  assert(continuousAudio.durationMs === 45000 && continuousAudio.idleGapSuppressed === false, 'audio-playback-cap-retained');
+  const audioStartCreditAttempt = makeTimeSlicePayload({previousMono:0,currentMono:1000,previousWall:0,currentWall:1000,foreground:true,basis:'audio_playback',sourceEventType:EventType.AUDIO_STARTED,sourceEventId:'audio-start-source',sourceEventSeq:1});
+  const audioStartCreditPolicy = (await import('./model.mjs')).validateEventPolicy(event(2,'s2b-audio-start-credit',EventType.TIME_SLICE,'E01',audioStartCreditAttempt));
+  assert(!audioStartCreditPolicy.valid && audioStartCreditPolicy.code === 'TIME_SLICE_SOURCE_EVENT_INVALID', 'audio-start-time-credit-blocked');
+
+  const audioStart = event(1,'s2b-audio-start',EventType.AUDIO_STARTED,'E01',{textRef:'E01'});
+  const audioEnd = event(2,'s2b-audio-end',EventType.AUDIO_ENDED,'E01',{audioStartEventId:audioStart.eventId,audioStartEventSeq:audioStart.seq});
+  const audioLifecycleReplay = analyseLearningReplay(lesson,[audioStart,audioEnd]);
+  assert(audioLifecycleReplay.valid && audioLifecycleReplay.closedAudioStartEventIds.includes(audioStart.eventId), 'audio-end-start-linkage-pass');
+  const orphanAudioEndReplay = analyseLearningReplay(lesson,[event(1,'s2b-audio-orphan-end',EventType.AUDIO_ENDED,'E01',{audioStartEventId:'missing-audio-start',audioStartEventSeq:1})]);
+  assert(!orphanAudioEndReplay.valid && orphanAudioEndReplay.code === 'AUDIO_END_START_EVENT_NOT_FOUND', 'audio-orphan-end-blocked');
+  const duplicateAudioEndReplay = analyseLearningReplay(lesson,[audioStart,audioEnd,event(3,'s2b-audio-end-dup',EventType.AUDIO_ENDED,'E01',{audioStartEventId:audioStart.eventId,audioStartEventSeq:audioStart.seq}),event(4,'s2b-audio-tail',EventType.ITEM_PRESENTED,'E01',{})]);
+  assert(!duplicateAudioEndReplay.valid && duplicateAudioEndReplay.code === 'AUDIO_START_ALREADY_CLOSED' && duplicateAudioEndReplay.contiguousHead === 2 && duplicateAudioEndReplay.quarantinedCount === 2, 'audio-duplicate-end-tail-quarantine');
+
+  const pathReplay = analyseLearningReplay(lesson,[
+    e1,
+    event(2,'s2b-path-corrupt-e8',EventType.ITEM_ANSWERED,'E08',{response:['Nu înțeleg.','Repetați, vă rog.','Am terminat.'],correct:true,humanReviewRequired:false,advance:true}),
+    event(3,'s2b-path-tail-e2',EventType.ITEM_ANSWERED,'E02',{response:'Mai încet, vă rog.',correct:true,humanReviewRequired:false,advance:true})
+  ]);
+  assert(!pathReplay.valid && pathReplay.code === 'EVENT_ITEM_PATH_MISMATCH' && pathReplay.contiguousHead === 1 && pathReplay.quarantinedCount === 2, 'path-replay-tail-quarantine');
+
+  let mismatchBlocked = false;
+  try { await store.append({...structuredClone(e1), payload:{response:'Nu înțeleg.',correct:false,humanReviewRequired:false,advance:false}}); }
+  catch (err) { mismatchBlocked = err instanceof EventConflictError && err.code === 'EVENT_ID_REUSE_MISMATCH'; }
+  assert(mismatchBlocked, 'event-id-reuse-conflict');
+
+  let seqBlocked = false;
+  try { await store.append(event(1,'s2b-e1b',EventType.ITEM_PRESENTED,'E01',{})); }
+  catch (err) { seqBlocked = err instanceof EventConflictError && ['SCOPE_LESSON_VERSION_SEQ_COLLISION','SCOPE_SESSION_SEQ_COLLISION'].includes(err.code); }
+  assert(seqBlocked, 'event-sequence-conflict');
+
+  let sequenceGapBlocked = false;
+  try { await store.append(event(3,'s2b-gap-e3',EventType.ITEM_PRESENTED,'E02',{})); }
+  catch (err) { sequenceGapBlocked = err instanceof EventConflictError && err.code === 'EVENT_SEQUENCE_PREDECESSOR_MISSING'; }
+  assert(sequenceGapBlocked, 'event-sequence-continuity-gap-blocked');
+
+  const replayGap = reduceLessonState(lesson,[e1,event(3,'s2b-replay-gap-e3',EventType.ITEM_ANSWERED,'E02',{response:'Mai încet, vă rog.',correct:true,humanReviewRequired:false,advance:true})]);
+  assert(replayGap.xp === 10 && replayGap.attempts.E02 === undefined, 'replay-sequence-gap-quarantine');
+  const seqCandidate = nextSequenceCandidate(3);
+  assert(seqCandidate === 4 && commitPersistedSequence(3, seqCandidate) === 4, 'sequence-commit-after-persist');
+  let badCommitBlocked = false;
+  try { commitPersistedSequence(3, 5); } catch (err) { badCommitBlocked = err?.code === 'SEQUENCE_COMMIT_MISMATCH'; }
+  assert(badCommitBlocked, 'sequence-commit-mismatch-blocked');
+  assert(EVENT_SEQUENCE_POLICY_VERSION === 3, 'sequence-policy-v3');
+
+  // Corruption simulation: bypass EventStore once to create 1,3. The runtime must
+  // never extend or heal that quarantined tail automatically.
+  const tailSession = createDevSession(Role.LEARNER,{subjectId:'browser-tail',organisationId:'browser-org'});
+  const tailScope = accessScopeForSession(tailSession);
+  const tailStore = new EventStore(tailScope);
+  await tailStore.open();
+  const tailEvent = (seq,id,type=EventType.ITEM_PRESENTED,itemId='E01',payload={}) => makeEvent({
+    type,lessonId:lesson.lessonId,contentVersion:lesson.contentVersion,seq,itemId,payload,ts:5000+seq,
+    sessionId:'browser-tail-session',eventId:id,...tailScope
+  });
+  await tailStore.append(tailEvent(1,'tail-e1',EventType.ITEM_PRESENTED,'E01',{}));
+  await rawInjectEventForCorruptionTest(tailEvent(3,'tail-e3',EventType.ITEM_PRESENTED,'E02',{}));
+  const tailChain = await tailStore.inspectSequenceChain(lesson.lessonId,lesson.contentVersion);
+  assert(!tailChain.valid && tailChain.contiguousHead === 1 && tailChain.maxObservedSeq === 3 && tailChain.quarantinedCount === 1, 'contiguous-chain-head-detected');
+  let quarantinedExtensionBlocked = false;
+  try { await tailStore.append(tailEvent(4,'tail-e4',EventType.ITEM_PRESENTED,'E02',{})); }
+  catch (err) { quarantinedExtensionBlocked = err instanceof EventConflictError && err.code === 'EVENT_SEQUENCE_CHAIN_QUARANTINED'; }
+  assert(quarantinedExtensionBlocked, 'quarantined-chain-extension-blocked');
+  tailStore.close();
+
+  // Semantic corruption simulation: bypass EventStore after a valid event. Replay
+  // must stop at the forged score and quarantine that event plus the later tail.
+  const semanticSession = createDevSession(Role.LEARNER,{subjectId:'browser-semantic',organisationId:'browser-org'});
+  const semanticScope = accessScopeForSession(semanticSession);
+  const semanticStore = new EventStore(semanticScope);
+  await semanticStore.open();
+  await semanticStore.activateContent(lesson);
+  const semanticEvent = (seq,id,type,itemId=null,payload={}) => makeEvent({
+    type,lessonId:lesson.lessonId,contentVersion:lesson.contentVersion,seq,itemId,payload,ts:7000+seq,
+    sessionId:'browser-semantic-session',eventId:id,...semanticScope
+  });
+  await semanticStore.append(semanticEvent(1,'semantic-e1',EventType.ITEM_ANSWERED,'E01',{response:'Nu înțeleg.',correct:true,humanReviewRequired:false,advance:true}));
+  await rawInjectEventForCorruptionTest(semanticEvent(2,'semantic-forged-e2',EventType.ITEM_ANSWERED,'E02',{response:'Am terminat.',correct:true,humanReviewRequired:false,advance:true}));
+  await rawInjectEventForCorruptionTest(semanticEvent(3,'semantic-tail-e3',EventType.ITEM_PRESENTED,'E02',{}));
+  const semanticChain = await semanticStore.inspectSequenceChain(lesson.lessonId,lesson.contentVersion);
+  assert(!semanticChain.valid && semanticChain.code === 'ANSWER_SCORE_MISMATCH' && semanticChain.contiguousHead === 1 && semanticChain.quarantinedCount === 2, 'semantic-replay-tail-quarantine');
+  semanticStore.close();
+
+  let orphanSourceBlocked = false;
+  try { await store.append(event(2,'s2b-orphan-time',EventType.TIME_SLICE,'E01',{policyVersion:4,eligible:true,durationMs:1000,rawDurationMs:1000,idleGapSuppressed:false,basis:'meaningful_interaction',sourceEventType:EventType.ITEM_ANSWERED,sourceEventId:'missing-source-event',sourceEventSeq:1,clockBasis:'performance.now',wallClockRollbackDetected:false,fromWallTs:1000,toWallTs:2000})); }
+  catch (err) { orphanSourceBlocked = err instanceof EventPolicyError && err.code === 'TIME_SLICE_SOURCE_EVENT_NOT_FOUND'; }
+  assert(orphanSourceBlocked, 'orphan-time-source-blocked');
+
+  let oversizedTimeBlocked = false;
+  try { await store.append(event(2,'s2b-bad-time',EventType.TIME_SLICE,'E01',{policyVersion:4,eligible:true,durationMs:45001,rawDurationMs:45001,idleGapSuppressed:false,basis:'meaningful_interaction',sourceEventType:EventType.ITEM_ANSWERED,sourceEventId:'s2b-e1',sourceEventSeq:1,clockBasis:'performance.now',wallClockRollbackDetected:false,fromWallTs:1000,toWallTs:2000})); }
+  catch (err) { oversizedTimeBlocked = err instanceof EventPolicyError && err.code === 'TIME_SLICE_DURATION_OUT_OF_RANGE'; }
+  assert(oversizedTimeBlocked, 'oversized-time-slice-blocked');
+  let autoAttributionBlocked = false;
+  try { await store.append(event(2,'s2b-auto-time',EventType.TIME_SLICE,'E01',{policyVersion:4,eligible:true,durationMs:1000,rawDurationMs:1000,idleGapSuppressed:false,basis:'meaningful_interaction',sourceEventType:EventType.ITEM_PRESENTED,sourceEventId:'s2b-e1',sourceEventSeq:1,clockBasis:'performance.now',wallClockRollbackDetected:false,fromWallTs:1000,toWallTs:2000})); }
+  catch (err) { autoAttributionBlocked = err instanceof EventPolicyError && err.code === 'TIME_SLICE_SOURCE_EVENT_INVALID'; }
+  assert(autoAttributionBlocked, 'automatic-event-time-attribution-blocked');
+  let ungatedSpeakingBlocked = false;
+  try { await store.append(event(3,'s2b-bad-speaking',EventType.SPEAKING_SUBMITTED,'E06',{placeholder:true})); }
+  catch (err) { ungatedSpeakingBlocked = err instanceof EventPolicyError && err.code === 'SPEAKING_REVIEW_GATE_REQUIRED'; }
+  assert(ungatedSpeakingBlocked, 'speaking-without-human-gate-blocked');
+
+  await store.append(event(2,'s2b-e2',EventType.TIME_SLICE,'E01',{policyVersion:4,eligible:true,durationMs:9000,rawDurationMs:9000,idleGapSuppressed:false,basis:'meaningful_interaction',sourceEventType:EventType.ITEM_ANSWERED,sourceEventId:'s2b-e1',sourceEventSeq:1,clockBasis:'performance.now',wallClockRollbackDetected:false,fromWallTs:1000,toWallTs:10000}));
+  let duplicateAttributionBlocked = false;
+  try { await store.append(event(3,'s2b-e2-duplicate-source',EventType.TIME_SLICE,'E01',{policyVersion:4,eligible:true,durationMs:500,rawDurationMs:500,idleGapSuppressed:false,basis:'meaningful_interaction',sourceEventType:EventType.ITEM_ANSWERED,sourceEventId:'s2b-e1',sourceEventSeq:1,clockBasis:'performance.now',wallClockRollbackDetected:false,fromWallTs:10000,toWallTs:10500})); }
+  catch (err) { duplicateAttributionBlocked = err instanceof EventConflictError && err.code === 'TIME_SLICE_SOURCE_ALREADY_ATTRIBUTED'; }
+  assert(duplicateAttributionBlocked, 'duplicate-time-attribution-blocked');
+
+  await store.append(event(3,'s2b-e3',EventType.ITEM_ANSWERED,'E02',{response:'Mai încet, vă rog.',correct:true,humanReviewRequired:false,advance:true}));
+  await store.append(event(4,'s2b-e4',EventType.ITEM_ANSWERED,'E03',{response:['MAI','ÎNCET','VĂ','ROG'],correct:true,humanReviewRequired:false,advance:true}));
+  await store.append(event(5,'s2b-e5',EventType.ITEM_ANSWERED,'E04',{response:'Vreau să aud din nou.',correct:true,humanReviewRequired:false,advance:true}));
+  await store.append(event(6,'s2b-e6',EventType.ITEM_ANSWERED,'E05',{response:'Unde scriu?',correct:true,humanReviewRequired:false,advance:true}));
+  await store.append(event(7,'s2b-e7',EventType.SPEAKING_SUBMITTED,'E06',{teacherReviewRequired:true,placeholder:true}));
+  const replayed = reduceLessonState(lesson, await store.listEvents(lesson.lessonId, lesson.contentVersion));
+  assert(replayed.activeMs === 9000, 'indexeddb-active-time-replay');
+  pass('monotonic-clock-policy-contract');
+  const legacyReplay = reduceLessonState(lesson,[e1,event(4,'s2b-legacy-time',EventType.TIME_SLICE,'E01',{policyVersion:3,eligible:true,durationMs:9000,rawDurationMs:9000,idleGapSuppressed:false,basis:'meaningful_interaction',sourceEventType:EventType.ITEM_ANSWERED,sourceEventId:'s2b-e1',sourceEventSeq:1,clockBasis:'performance.now',wallClockRollbackDetected:false,fromWallTs:1000,toWallTs:10000})]);
+  assert(legacyReplay.activeMs === 0, 'legacy-time-replay-quarantine');
+  assert(replayed.speakingPending.includes('E06'), 'speaking-human-review-replay');
+  assert(replayed.cursor === 5 && replayed.completed === false, 'speaking-review-path-hold');
+  assert(replayed.xp === 50, 'speaking-pending-no-xp');
+  let speakingResubmitBlocked = false;
+  try { await store.append(event(8,'s2b-speaking-resubmit',EventType.SPEAKING_SUBMITTED,'E06',{teacherReviewRequired:true,placeholder:true})); }
+  catch (err) { speakingResubmitBlocked = err instanceof EventPolicyError && err.code === 'SPEAKING_REVIEW_PENDING_RESUBMIT_FORBIDDEN'; }
+  assert(speakingResubmitBlocked, 'speaking-pending-resubmit-blocked');
+  const fakeFinalState={...replayed,cursor:lesson.items.length,speakingPending:['E06']};
+  const completionGate=(await import('./model.mjs')).validateEventSemantics(lesson,event(8,'s2b-speaking-complete',EventType.LESSON_COMPLETED,null,{}),{state:fakeFinalState});
+  assert(completionGate.code === 'LESSON_COMPLETION_SPEAKING_REVIEW_PENDING', 'speaking-pending-completion-blocked');
+  assert(replayed.xp === 50, 'indexeddb-xp-replay');
+
+  const otherSession = createDevSession(Role.LEARNER,{subjectId:'browser-other',organisationId:'browser-org'});
+  const otherScope = accessScopeForSession(otherSession);
+  const otherStore = new EventStore(otherScope);
+  await otherStore.open();
+  const otherE1 = makeEvent({
+    type:EventType.ITEM_ANSWERED, lessonId:lesson.lessonId, contentVersion:lesson.contentVersion,
+    seq:1, itemId:'E01', payload:{response:'Nu înțeleg.',correct:true,humanReviewRequired:false,advance:true}, ts:2000,
+    sessionId:'browser-s2b-other', eventId:'s2b-other-e1', ...otherScope
+  });
+  assert((await otherStore.append(otherE1)).status === 'appended', 'multi-learner-same-seq-isolated');
+  let scopeMismatchBlocked = false;
+  try { await store.append(otherE1); }
+  catch (err) { scopeMismatchBlocked = err instanceof EventScopeError && err.code === 'EVENT_SCOPE_MISMATCH'; }
+  assert(scopeMismatchBlocked, 'cross-subject-event-append-blocked');
+  let crossRoleBlocked = false;
+  try { await store.append({...event(4,'s2b-cross-role-e4',EventType.ITEM_ANSWERED,'E02',{response:'Mai încet, vă rog.',correct:true,humanReviewRequired:false,advance:true}), role:Role.TEACHER}); }
+  catch (err) { crossRoleBlocked = err instanceof EventPolicyError && err.code === 'LEARNING_EVENT_ROLE_FORBIDDEN'; }
+  assert(crossRoleBlocked, 'cross-role-event-append-blocked');
+  await store.putSnapshot({lessonId:lesson.lessonId,contentVersion:lesson.contentVersion,lastSeq:7,state:replayed,updatedAt:4000});
+  assert((await otherStore.getSnapshot(lesson.lessonId,lesson.contentVersion)) === null, 'snapshot-subject-isolation');
+  otherStore.close();
+
+  let mutationBlocked = false;
+  try { await store.activateContent({...lesson, title:'MUTATED SAME VERSION'}); }
+  catch (err) { mutationBlocked = err instanceof ContentVersionError && err.code === 'CONTENT_VERSION_MUTATION'; }
+  assert(mutationBlocked, 'content-version-immutability');
+
+  let migrationBlocked = false;
+  try { await store.activateContent({...lesson, contentVersion:'rpm-rls07-p0-help-01@0.2.0'}); }
+  catch (err) { migrationBlocked = err instanceof ContentVersionError && err.code === 'CONTENT_MIGRATION_REQUIRED'; }
+  assert(migrationBlocked, 'content-migration-human-gate');
+  store.close();
+
+  // 2) S2 access boundary in a real module/browser runtime.
+  assertLearnerSession(learnerSession);
+  assertTenantBoundary(learnerSession,'browser-org');
+  pass('learner-route-allow');
+  pass('tenant-boundary-allow');
+  let teacherBlocked = false;
+  try { assertLearnerSession(createDevSession(Role.TEACHER)); }
+  catch (err) { teacherBlocked = err?.code === 'ROLE_FORBIDDEN'; }
+  assert(teacherBlocked, 'teacher-blocked-from-learner-route');
+  assert(routeDecision('teacher', createDevSession(Role.TEACHER)).code === 'STAGE_NOT_OPEN', 'teacher-stage-gate');
+  assert(routeDecision('employer', createDevSession(Role.EMPLOYER)).code === 'STAGE_NOT_OPEN', 'employer-stage-gate');
+  assert(!employerCanSee(Capability.SPEAKING_REVIEW), 'employer-speaking-firewall');
+
+  // 3) Service-worker/Cache API runtime contract. This confirms registration and
+  // precache population. True offline navigation is executed by the external CDP runner.
+  assert('serviceWorker' in navigator, 'service-worker-api');
+  const reg = await navigator.serviceWorker.register('./sw.js');
+  await navigator.serviceWorker.ready;
+  assert(!!reg.active || !!reg.waiting || !!reg.installing, 'service-worker-registration');
+
+  const cacheNames = await caches.keys();
+  assert(cacheNames.includes('rpm-learn-s2b-v19'), 'pwa-cache-present');
+  const cache = await caches.open('rpm-learn-s2b-v19');
+  for (const asset of ['./index.html','./offline.html','./app.mjs','./access.mjs','./model.mjs','./event-store.mjs','./fixture.mjs','./manifest.webmanifest']) {
+    assert(!!(await cache.match(asset)), `precache-${asset}`);
+  }
+
+  const manifest = await (await fetch('./manifest.webmanifest', {cache:'no-store'})).json();
+  assert(manifest.display === 'standalone' && manifest.scope === './' && manifest.id === './', 'manifest-runtime-contract');
+
+  globalThis.__rpmAcceptance = Object.freeze({contractVersion:ACCEPTANCE_CONTRACT_VERSION,checks:Object.freeze([...checks])});
+  document.documentElement.dataset.runtimeStatus = 'PASS_PRE_OFFLINE';
+  out.textContent = ['RPM_S2B_BROWSER_PREOFFLINE_PASS', ...checks.map(name => `PASS ${name}`)].join('\n');
+}
+
+main().catch(err => {
+  document.documentElement.dataset.runtimeStatus = 'FAIL';
+  out.textContent = 'RPM_S2B_BROWSER_PREOFFLINE_FAIL\n' + (err?.stack || err) + '\n' + checks.map(name => `PASS ${name}`).join('\n');
+});
+</script>

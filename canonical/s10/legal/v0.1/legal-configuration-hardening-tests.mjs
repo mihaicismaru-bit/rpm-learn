@@ -1,0 +1,21 @@
+import assert from 'node:assert/strict';
+import {buildLegalConfigurationCandidate,evaluateLegalConfigurationSimulation,LegalConfigurationError} from './legal-configuration-candidate.mjs';
+// S10 simulation hardening only. No legal/product compliance or certificate authority conferred.
+const cfg=buildLegalConfigurationCandidate({configId:'S10-TEST-ONLY',configVersion:'test-v1',weeklyRequirementMs:120000,minimumPeriodWeeks:2,recoveryAllowed:true,recoveryWindowWeeks:1,sourceAuthorityRef:'TEST-ONLY-NOT-LEGAL-AUTHORITY'});
+const week=(weekLabel='2026-W40',validatedLearningTimeMs=120000,provenance={learningTimeLedgerVersion:1,learningTimeEntryCount:4})=>({weekLabel,validatedLearningTimeMs,provenance});
+const evaluate=(candidate,weeklyEvidence)=>evaluateLegalConfigurationSimulation({candidate,weeklyEvidence});
+const reject=(candidate,weeklyEvidence,code)=>assert.throws(()=>evaluate(candidate,weeklyEvidence),e=>e instanceof LegalConfigurationError&&e.code===code,code);
+const accepted=evaluate(cfg,[week(),week('2026-W41',90000)]);
+assert.equal(accepted.legalClaim,false);
+assert.equal(accepted.productionComplianceAuthority,false);
+assert.equal(accepted.certificateAuthority,false);
+assert.deepEqual(accepted,evaluate(cfg,[week(),week('2026-W41',90000)]));
+reject({...cfg,weeklyRequirementMs:-2},[week()],'LEGAL_CONFIG_WEEKLY_REQUIREMENT_INVALID');
+reject({...cfg,legalClaim:true},[week()],'LEGAL_CONFIG_CANDIDATE_REQUIRED');
+reject({...cfg,recoveryAllowed:'allow'},[week()],'LEGAL_CONFIG_RECOVERY_FLAG_INVALID');
+reject(cfg,[week('2026-W40',120000,{learningTimeLedgerVersion:1,learningTimeEntryCount:0})],'LEGAL_CONFIG_UNSOURCED_TIME_FORBIDDEN');
+reject(cfg,[week('2026-W40',120000,{learningTimeLedgerVersion:1,learningTimeEntryCount:4,certificateAuthority:true})],'LEGAL_CONFIG_PROVENANCE_INVALID');
+reject(cfg,[week('2026-W40',Number.MAX_SAFE_INTEGER+1)],'LEGAL_CONFIG_WEEKLY_TIME_INVALID');
+reject(cfg,[week('2026-W40',Number.MAX_SAFE_INTEGER),week('2026-W41',90000)],'LEGAL_CONFIG_TOTAL_OVERFLOW');
+reject(cfg,[week(),week(' 2026-W40 ')],'LEGAL_CONFIG_WEEK_LABEL_NOT_CANONICAL');
+console.log('RPM_S10_LEGAL_CONFIG_HARDENING_PASS tamper-proof-candidate sourced-weekly-evidence safe-integers safe-aggregate canonical-week-label deterministic-simulation no-legal-certificate-authority');

@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "status": "PREFLIGHT_ONLY",
+  "cases": [
+    {
+      "id": "whitelist-active",
+      "expect": "only approved render fields"
+    },
+    {
+      "id": "order-words-presentation",
+      "expect": "deterministic permutation with same token set and non-identity when length > 1"
+    },
+    {
+      "id": "integrity-summary",
+      "expect": "bounded blocked/code summary; no replay detail"
+    },
+    {
+      "id": "source-lane-boundary",
+      "expect": "RLS-07 accepted; other lanes rejected"
+    },
+    {
+      "id": "session-port-boundary",
+      "expect": "start/refresh/answer/complete only; returned frame sanitized"
+    },
+    {
+      "id": "deferred-actions",
+      "expect": "audio=false and speaking=false"
+    }
+  ]
+}

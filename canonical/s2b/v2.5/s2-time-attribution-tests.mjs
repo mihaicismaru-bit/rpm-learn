@@ -1,0 +1,33 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import { EventType, validateEventPolicy, makeEvent, makeTimeSlicePayload, EVENT_POLICY_VERSION, reduceLessonState } from './model.mjs';
+import { lesson } from './fixture.mjs';
+const app=fs.readFileSync(new URL('./app.mjs',import.meta.url),'utf8');
+const base=(seq,payload)=>makeEvent({type:EventType.TIME_SLICE,lessonId:'L',contentVersion:'v1',seq,itemId:'E01',payload,ts:2000,sessionId:'s',eventId:'e'+seq,subjectId:'u',organisationId:'o',role:'LEARNER'});
+const good=makeTimeSlicePayload({previousMono:100,currentMono:1100,previousWall:1000,currentWall:2000,foreground:true,basis:'meaningful_interaction',sourceEventType:EventType.ITEM_ANSWERED,sourceEventId:'source-1',sourceEventSeq:1});
+assert.equal(good.policyVersion,EVENT_POLICY_VERSION);
+assert.equal(validateEventPolicy(base(2,good)).valid,true);
+assert.equal(validateEventPolicy(base(3,{...good,sourceEventType:EventType.ITEM_PRESENTED})).code,'TIME_SLICE_SOURCE_EVENT_INVALID');
+assert.equal(validateEventPolicy(base(4,{...good,eligible:false,durationMs:1000})).code,'TIME_SLICE_ELIGIBILITY_DURATION_MISMATCH');
+assert.equal(validateEventPolicy(base(5,{...good,policyVersion:2})).code,'TIME_SLICE_POLICY_VERSION_MISMATCH');
+assert.equal(validateEventPolicy(base(6,{...good,sourceEventId:null})).code,'TIME_SLICE_SOURCE_EVENT_ID_REQUIRED');
+assert.equal(validateEventPolicy(base(1,{...good,sourceEventSeq:1})).code,'TIME_SLICE_SOURCE_EVENT_SEQ_INVALID');
+const audio=makeTimeSlicePayload({previousMono:100,currentMono:2100,previousWall:1000,currentWall:3000,foreground:true,basis:'audio_playback',sourceEventType:EventType.AUDIO_ENDED,sourceEventId:'source-audio',sourceEventSeq:6});
+assert.equal(validateEventPolicy(base(7,audio)).valid,true);
+
+const legacy={schemaVersion:2,eventId:'legacy-time',sessionId:'s',subjectId:'dev-learner',organisationId:'dev-org',role:'LEARNER',seq:2,type:EventType.TIME_SLICE,lessonId:lesson.lessonId,contentVersion:lesson.contentVersion,itemId:'E01',ts:2000,payload:{policyVersion:3,eligible:true,durationMs:45000,basis:'meaningful_interaction',sourceEventType:EventType.ITEM_ANSWERED,clockBasis:'performance.now',wallClockRollbackDetected:false,fromWallTs:0,toWallTs:45000}};
+assert.equal(reduceLessonState(lesson,[legacy]).activeMs,0,'legacy time slice must be quarantined at replay');
+
+assert.ok(app.indexOf('const ev = makeEvent') < app.indexOf('const timePayload = makeTimeSlicePayload'),'source event must be created before time attribution');
+assert.ok(app.indexOf('const eres = await store.append(ev)') < app.indexOf('const timePayload = makeTimeSlicePayload'),'source event must persist before time attribution');
+assert.ok(app.includes('sourceEventId: ev.eventId'),'time slice must bind exact source event id');
+assert.ok(app.includes('sourceEventSeq: ev.seq'),'time slice must bind exact source sequence');
+assert.ok(app.includes("console.warn('RPM_TIME_CREDIT_FAIL_CLOSED'"),'time credit failure must degrade conservatively without losing learner action');
+assert.ok(app.includes("append(EventType.ITEM_PRESENTED, item.id, { cursor: state.cursor });"),'ITEM_PRESENTED persists without active-time credit options');
+assert.ok(app.includes("append(EventType.SESSION_STARTED, null, { recoveredFromSeq: seq });"),'SESSION_STARTED persists without active-time credit options');
+assert.ok(app.includes("append(EventType.LESSON_COMPLETED, null, { speakingPending: state.speakingPending });"),'LESSON_COMPLETED persists without active-time credit options');
+assert.ok(app.includes("{ timeBasis: 'meaningful_interaction' }"),'answer/speaking time credit must be explicit');
+assert.ok(!app.includes("append(EventType.AUDIO_STARTED, item.id, { textRef: item.id }, { timeBasis: 'meaningful_interaction' })"),'audio start click must never earn retroactive interaction time');
+assert.ok(app.includes("{ timeBasis: 'audio_playback', timeFromMono: audioStartMono, timeFromWall: audioStartWall }"),'audio playback credit must use explicit audio anchors');
+assert.ok(app.includes('document.hasFocus()'),'foreground time must require document focus in addition to visibility');
+console.log('RPM_S2_TIME_ATTRIBUTION_PASS source-first source-linked single-attribution legacy-quarantine explicit-user-credit audio-attribution focus-gate');

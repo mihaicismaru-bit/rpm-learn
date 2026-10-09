@@ -1,0 +1,17 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://rpm-learn.local/schemas/content-migration.schema.json",
+  "title":"RPM LEARN Explicit Content Migration v1",
+  "type":"object",
+  "required":["migrationId","fromVersion","toVersion","strategy","humanApproved"],
+  "properties":{
+    "migrationId":{"type":"string","minLength":1},
+    "fromVersion":{"type":"string","minLength":1},
+    "toVersion":{"type":"string","minLength":1},
+    "strategy":{"enum":["restart","explicit_map"]},
+    "humanApproved":{"const":true},
+    "approvedAt":{"type":"string"},
+    "note":{"type":"string"}
+  },
+  "additionalProperties":false
+}

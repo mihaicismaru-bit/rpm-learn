@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rpm-learn.local/schemas/event.schema.json",
+  "title": "RPM LEARN LearningEvent v2",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "eventId",
+    "sessionId",
+    "subjectId",
+    "organisationId",
+    "role",
+    "seq",
+    "type",
+    "lessonId",
+    "contentVersion",
+    "ts",
+    "payload"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 2
+    },
+    "eventId": {
+      "type": "string"
+    },
+    "sessionId": {
+      "type": "string"
+    },
+    "subjectId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "organisationId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "role": {
+      "const": "LEARNER"
+    },
+    "seq": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "type": {
+      "enum": [
+        "SESSION_STARTED",
+        "ITEM_PRESENTED",
+        "ITEM_ANSWERED",
+        "AUDIO_STARTED",
+        "AUDIO_ENDED",
+        "SPEAKING_SUBMITTED",
+        "TIME_SLICE",
+        "MASTERY_APPLIED",
+        "LESSON_COMPLETED"
+      ]
+    },
+    "lessonId": {
+      "type": "string"
+    },
+    "contentVersion": {
+      "type": "string"
+    },
+    "itemId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "ts": {
+      "type": "integer"
+    },
+    "payload": {
+      "type": "object"
+    }
+  },
+  "description": "Learning event identity schema v2. LearningEvent is learner-role only; Teacher/Employer/Admin actions are separate OS/control streams. Runtime EVENT_POLICY_VERSION 4 enforces learner role binding, monotonic active-time derivation, no retroactive credit after a meaningful-interaction idle gap longer than 45 seconds, AUDIO_STARTED as audit-only for time purposes, provenance-bound AUDIO_ENDED listening credit, exact source-event linkage, single attribution per source event, replay quarantine for invalid/legacy events, audit metadata, and speaking human-review gate. EVENT_SEMANTIC_POLICY_VERSION 2 recomputes deterministic ITEM_ANSWERED outcomes from stored responses and canonical immutable items, binds state-changing events to the canonical current lesson path, rejects learner-authored MASTERY_APPLIED mutations, verifies item/media/speaking bindings, blocks premature completion, and quarantines the replay tail after semantic/path corruption."
+}

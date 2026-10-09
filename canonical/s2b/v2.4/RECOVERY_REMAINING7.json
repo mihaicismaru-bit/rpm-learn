@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "rpm-s2b-promotion-recovery/v1",
+  "buildId": "RPM-S2B-BROWSER-GATE-v2.4",
+  "fingerprint": "f1b12ee3fec0a738b3dc9f17e82da2250769b3e5ff5fd9a3a35026e19db2987d",
+  "packageSha256": "7999278085e246133f5012be41fb710e317c051e9345f4ad19b246e59bb83d36",
+  "repositoryInventory": {
+    "presentExact": 36,
+    "total": 43,
+    "missingExact": 7
+  },
+  "generatedAt": "2026-10-01T03:44:43Z",
+  "controlOnly": true,
+  "fingerprintBound": false,
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 24805,
+      "sha256": "008c2386396e1c87cd64ddbc5a7afb481de6bf9f93cea2292cf5c69963529d95",
+      "gitBlobSha1": "3454eae72e386bc4defa792fcbfd728081a832d7"
+    },
+    {
+      "path": "app.mjs",
+      "bytes": 10503,
+      "sha256": "7c16d5ce35ede1160a8b7952a6b714d36ed0fd336bd89470d12b5e8bbb740df8",
+      "gitBlobSha1": "f55d4273f4acbcebceafb756174745ac5a4c628d"
+    },
+    {
+      "path": "browser-acceptance.html",
+      "bytes": 22947,
+      "sha256": "cee3b4aa5a8262698614281ce6e101c924ab4fca907052340176649d304e605c",
+      "gitBlobSha1": "75731d06bf3738710076ff27005746c643195cd1"
+    },
+    {
+      "path": "icon-512.png",
+      "bytes": 7507,
+      "sha256": "81361b3985fd938ed7ed35bb4fbd50cc2879a6ce523b83d80f92caa35cb33fa6",
+      "gitBlobSha1": "c245479d8d0c03dffe1dbd58d1bdc0f16f006aed"
+    },
+    {
+      "path": "model.mjs",
+      "bytes": 33786,
+      "sha256": "d49c8af6991558a8762ecd44376eaa63c5cda6ba174a2a8ae32fb47fa54890ad",
+      "gitBlobSha1": "784283d018ae4d49d6115720d741d176e28caa2e"
+    },
+    {
+      "path": "event-store.mjs",
+      "bytes": 15586,
+      "sha256": "9c15cb23bd414022a978fc7b0bbdca2f27875d996d03eb8d23990650b60eb662",
+      "gitBlobSha1": "287f5b51ed0cd13e6571f3e513c0ee81e34fe625"
+    },
+    {
+      "path": "browser-acceptance-runner.mjs",
+      "bytes": 11317,
+      "sha256": "42492a2f44935fa85e6d5e5540271f6e9bd5fde14abda7a3226acaf87dee2693",
+      "gitBlobSha1": "5a3f1086bbdeb4fd04b4dc5349316dfdf9a4a81e"
+    }
+  ],
+  "invariant": "No substitute bytes. main remains unchanged. S3 remains closed until exact-build runtime PASS."
+}
