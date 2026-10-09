@@ -44,9 +44,9 @@ export function interactionForItem(item) {
   throw new LessonPlayerContractError('LESSON_PLAYER_UNSUPPORTED_ITEM_TYPE', { itemId: item.id ?? null, type: item.type ?? null });
 }
 
-export function deriveLessonPlayerView(lesson, events = []) {
+export function deriveLessonPlayerView(lesson, events = [], { trustedHumanReviews = [] } = {}) {
   const contentContract = assertLesson(lesson);
-  const replay = analyseLearningReplay(lesson, events);
+  const replay = analyseLearningReplay(lesson, events, { trustedHumanReviews });
 
   if (!replay.valid) {
     return Object.freeze({
@@ -110,8 +110,8 @@ export function deriveLessonPlayerView(lesson, events = []) {
   });
 }
 
-export function planAnswerIntent(lesson, events, itemId, response) {
-  const view = deriveLessonPlayerView(lesson, events);
+export function planAnswerIntent(lesson, events, itemId, response, { trustedHumanReviews = [] } = {}) {
+  const view = deriveLessonPlayerView(lesson, events, { trustedHumanReviews });
   if (view.status === 'INTEGRITY_BLOCKED') {
     throw new LessonPlayerContractError('LESSON_PLAYER_INTEGRITY_BLOCKED', view.replay);
   }
@@ -148,8 +148,8 @@ export function planAnswerIntent(lesson, events, itemId, response) {
   });
 }
 
-export function planCompletionIntent(lesson, events) {
-  const view = deriveLessonPlayerView(lesson, events);
+export function planCompletionIntent(lesson, events, { trustedHumanReviews = [] } = {}) {
+  const view = deriveLessonPlayerView(lesson, events, { trustedHumanReviews });
   if (!view.canComplete) {
     throw new LessonPlayerContractError('LESSON_PLAYER_COMPLETION_GATE_CLOSED', {
       status: view.status,
