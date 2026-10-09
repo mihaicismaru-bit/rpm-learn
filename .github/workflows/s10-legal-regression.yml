@@ -21,6 +21,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Compute S2 successor fingerprint candidate
+        run: |
+          cp canonical/s2b/v2.6/RPM_S2B_BUILD_FINGERPRINT.json /tmp/RPM_S2B_BUILD_FINGERPRINT.original.json
+          (cd canonical/s2b/v2.6 && node build-fingerprint.mjs && sha256sum RPM_S2B_BUILD_FINGERPRINT.json model.mjs event-store.mjs)
+          mv /tmp/RPM_S2B_BUILD_FINGERPRINT.original.json canonical/s2b/v2.6/RPM_S2B_BUILD_FINGERPRINT.json
       - name: Pin S2 promoted package and fingerprint
         run: |
           node tools/s2b-package-gate-v2.mjs --source-root canonical/s2b/v2.6 --sums packaging/s2b/v2.6.1/SHA256SUMS.txt --fingerprint canonical/s2b/v2.6/RPM_S2B_BUILD_FINGERPRINT.json
