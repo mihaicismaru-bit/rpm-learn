@@ -9,47 +9,16 @@ import {buildTeacherLearnerView,createTeacherValidationService} from '../canonic
 import {buildEmployerLearnerView} from '../canonical/s8/employer/v0.1/employer-os.mjs';
 import {buildReportsEvidencePack} from '../canonical/s9/reports/v0.1/reports-evidence-pack.mjs';
 import {requireCertificateIssuance} from '../canonical/s11/certificate/v0.1/certificate-gate.mjs';
+import {createBrowserPersistence} from './browser-recovery.mjs';
 
-class BrowserEventStore{
-  constructor(trustedHumanReviewProvider=null){this.lesson=null;this.events=[];this.trustedHumanReviewProvider=trustedHumanReviewProvider}
-  async listTrustedHumanReviews(lessonId,contentVersion){
-    if(!this.trustedHumanReviewProvider)return [];
-    const rows=await this.trustedHumanReviewProvider({lessonId,contentVersion});
-    return Array.isArray(rows)?rows.map(x=>structuredClone(x)):[];
-  }
-  async open(){return true}
-  async activateContent(next){this.lesson=structuredClone(next);return {status:'initialize'}}
-  async listEvents(lessonId,contentVersion){return this.events.filter(e=>e.lessonId===lessonId&&e.contentVersion===contentVersion).map(e=>structuredClone(e))}
-  async inspectSequenceChain(lessonId,contentVersion){
-    const [rows,trustedHumanReviews]=await Promise.all([this.listEvents(lessonId,contentVersion),this.listTrustedHumanReviews(lessonId,contentVersion)]);
-    return analyseLearningReplay(this.lesson,rows,{trustedHumanReviews})
-  }
-  async append(event){
-    const candidate=[...this.events,structuredClone(event)];
-    const trustedHumanReviews=await this.listTrustedHumanReviews(event.lessonId,event.contentVersion);
-    const replay=analyseLearningReplay(this.lesson,candidate,{trustedHumanReviews});
-    if(!replay.valid)throw Object.assign(new Error(replay.code),{code:replay.code});
-    this.events=candidate;return {status:'appended',event:structuredClone(event)}
-  }
-}
-class ReviewStore{
-  constructor(){this.rows=[]}
-  async open(){}
-  async listReviews(){return this.rows.map(x=>structuredClone(x))}
-  async appendReview(record){const old=this.rows.find(x=>x.reviewId===record.reviewId);if(old)return {status:'duplicate',record:structuredClone(old)};this.rows.push(structuredClone(record));return {status:'appended',record:structuredClone(record)}}
-}
-class ValidationStore{
-  constructor(){this.rows=[]}
-  async open(){}
-  async listValidations(){return this.rows.map(x=>structuredClone(x))}
-  async appendValidation(record){const old=this.rows.find(x=>x.validationId===record.validationId);if(old)return {status:'duplicate',record:structuredClone(old)};this.rows.push(structuredClone(record));return {status:'appended',record:structuredClone(record)}}
-}
 const scope={subjectId:'learner-demo',organisationId:'org-demo',role:'LEARNER'};
 const teacher={teacherId:'teacher-demo',organisationId:'org-demo',role:'TEACHER'};
 const employer={employerId:'employer-demo',organisationId:'org-demo',role:'EMPLOYER'};
-const reviewStore=new ReviewStore();
-const validationStore=new ValidationStore();
-const eventStore=new BrowserEventStore(async()=>reviewStore.listReviews());
+// Synthetic TEST-only browser persistence. The private learning/event ledger is not legal evidence.
+const browserStorage=(()=>{try{return window.localStorage}catch{return null}})();
+const {eventStore,reviewStore,validationStore}=createBrowserPersistence({
+  storage:browserStorage,lesson,scope,teacher
+});
 let tick=Date.now(), view=null, currentRenderedAt=performance.now(), currentRenderedWall=Date.now();
 const controller=new LessonPlayerSessionController({lesson,eventStore,scope,sessionId:'rpm-functional-demo',now:()=>++tick});
 const speaking=createSpeakingSubmissionService({lesson,eventStore,scope,sessionId:'rpm-functional-speaking',now:()=>++tick});
@@ -148,4 +117,12 @@ async function renderEmployer(s){
 }
 async function renderAll(){const s=await snapshots();await renderLearner(s);await renderTeacher(s);await renderEmployer(s)}
 document.querySelectorAll('.tab').forEach(tab=>tab.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.setAttribute('aria-selected',String(x===tab)));for(const role of ['learner','teacher','employer'])$('#'+role+'Panel').classList.toggle('hidden',role!==tab.dataset.role)});
-view=await controller.start();await renderAll();
+function renderRecoveryBlocked(error){
+  const code=esc(error?.code??'BROWSER_RECOVERY_UNAVAILABLE');
+  $('#learnerPanel').innerHTML='<div class="card"><h2>Progresul local nu poate fi verificat</h2><div class="notice danger">Datele TEST nu au fost resetate automat. Pentru siguranță, continuarea lecției este blocată până la rezolvarea problemei. Cod: '+code+'</div></div>';
+  $('#teacherPanel').innerHTML='<div class="card"><div class="notice danger">Review indisponibil: integritatea datelor locale nu este confirmată.</div></div>';
+  $('#employerPanel').innerHTML='<div class="card"><div class="notice danger">Rapoartele sunt indisponibile până la recuperarea stării.</div></div>';
+}
+window.addEventListener('unhandledrejection',event=>renderRecoveryBlocked(event.reason));
+try{view=await controller.start();await renderAll();}
+catch(error){renderRecoveryBlocked(error);}

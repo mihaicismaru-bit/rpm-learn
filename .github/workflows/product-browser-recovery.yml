@@ -1,0 +1,51 @@
+name: RPM Product Browser Recovery Gate (TEST)
+on:
+  push:
+    branches:
+      - hardening/product-browser-recovery-v0.3
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'product/**'
+      - 'canonical/**'
+      - 'packaging/**'
+      - '.github/workflows/product-browser-recovery.yml'
+permissions:
+  contents: read
+concurrency:
+  group: rpm-browser-recovery-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  browser-recovery-and-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Pin promoted S2 baseline
+        run: |
+          node tools/s2b-package-gate-v2.mjs --source-root canonical/s2b/v2.6 --sums packaging/s2b/v2.6.2/SHA256SUMS.txt --fingerprint canonical/s2b/v2.6/RPM_S2B_BUILD_FINGERPRINT.json
+          (cd canonical/s2b/v2.6 && node build-fingerprint-self-check.mjs)
+      - name: Test fail-closed browser recovery
+        run: |
+          node --check product/browser-recovery.mjs
+          node --check product/browser-recovery-tests.mjs
+          node product/browser-recovery-tests.mjs
+      - name: Full canonical deterministic regression S3-S12
+        shell: bash
+        run: |
+          set -euo pipefail
+          for stage in s3 s4 s5 s6 s7 s8 s9 s10 s11 s12; do
+            while IFS= read -r -d '' test; do node "$test"; done < <(find "canonical/$stage" -type f -name '*tests.mjs' -print0 | sort -z)
+          done
+      - name: Functional-product regressions
+        run: |
+          node product/functional-integration-tests.mjs
+          node product/review-resume-security-tests.mjs
+          node product/completion-ui-contract-tests.mjs
+      - name: Fail closed legal and certificate status
+        run: |
+          echo 'RPM_BROWSER_RECOVERY_TEST_ONLY: no production compliance, certificate issuance or legal authority.'

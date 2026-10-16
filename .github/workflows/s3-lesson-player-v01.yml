@@ -19,7 +19,7 @@ jobs:
           node-version: '22'
       - name: Preserve promoted S2 baseline
         run: |
-          node tools/s2b-package-gate-v2.mjs --source-root canonical/s2b/v2.6 --sums packaging/s2b/v2.6.1/SHA256SUMS.txt --fingerprint canonical/s2b/v2.6/RPM_S2B_BUILD_FINGERPRINT.json
+          node tools/s2b-package-gate-v2.mjs --source-root canonical/s2b/v2.6 --sums packaging/s2b/v2.6.2/SHA256SUMS.txt --fingerprint canonical/s2b/v2.6/RPM_S2B_BUILD_FINGERPRINT.json
           cd canonical/s2b/v2.6
           node build-fingerprint-self-check.mjs
       - name: Lesson Player engine contract
