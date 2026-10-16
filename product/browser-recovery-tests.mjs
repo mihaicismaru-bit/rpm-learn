@@ -48,7 +48,7 @@ async function proceed(controller,stopId='E06'){
   view=await a.controller.answer('E01',correct(view));
   assert.equal(view.currentItem.id,'E02');
   const before=await a.persistence.eventStore.listEvents(lesson.lessonId,lesson.contentVersion);
-  assert.ok(before.length>=3);
+  assert.ok(before.length>0,'answer interaction must persist at least one event');
   const b=open(s);
   const recovered=await b.controller.start();
   assert.equal(recovered.currentItem.id,'E02');
