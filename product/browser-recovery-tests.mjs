@@ -112,7 +112,7 @@ async function proceed(controller,stopId='E06'){
   const s=storage();
   s.setItem=()=>{throw Object.assign(new Error('Quota denied'),{name:'QuotaExceededError'});};
   const a=open(s);
-  await assert.rejects(()=>a.controller.start(),e=>e?.code==='BROWSER_RECOVERY_WRITE_FAILED');
+  await assert.rejects(()=>a.controller.start(),e=>e?.code==='SESSION_EVENT_PERSIST_FAILED'&&e?.detail?.storeCode==='BROWSER_RECOVERY_WRITE_FAILED');
   assert.equal(s.raw.size,0);
 }
 
