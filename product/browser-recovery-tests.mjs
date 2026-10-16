@@ -57,7 +57,7 @@ async function proceed(controller,stopId='E06'){
   assert.equal((await b.persistence.eventStore.inspectSequenceChain(lesson.lessonId,lesson.contentVersion)).valid,true);
   const same=await b.persistence.eventStore.append(before[0]);
   assert.equal(same.status,'duplicate');
-  reject(()=>a.persistence.eventStore.listEvents(lesson.lessonId,lesson.contentVersion),'BROWSER_RECOVERY_CONCURRENT_CHANGE_RELOAD_REQUIRED');
+  await assert.rejects(()=>a.persistence.eventStore.listEvents(lesson.lessonId,lesson.contentVersion),e=>e instanceof BrowserRecoveryError&&e.code==='BROWSER_RECOVERY_CONCURRENT_CHANGE_RELOAD_REQUIRED');
 }
 
 // Both content-version drift and content mutation under an unchanged version fail closed.
@@ -66,7 +66,7 @@ async function proceed(controller,stopId='E06'){
   await a.controller.start();
   const altered=structuredClone(lesson);
   altered.title='Different source bytes under same contentVersion';
-  reject(()=>open(s,scope,altered).persistence.eventStore.open(),'BROWSER_RECOVERY_ENVELOPE_MISMATCH');
+  await assert.rejects(()=>open(s,scope,altered).persistence.eventStore.open(),e=>e instanceof BrowserRecoveryError&&e.code==='BROWSER_RECOVERY_ENVELOPE_MISMATCH');
   const differentVersion=structuredClone(lesson);
   differentVersion.contentVersion+='-candidate';
   const v=open(s,scope,differentVersion);
@@ -92,15 +92,15 @@ async function proceed(controller,stopId='E06'){
   await a.controller.start();
   const key=a.persistence.key, original=JSON.parse(s.getItem(key));
   s.setItem(key,'{invalid-json');
-  reject(()=>open(s).persistence.eventStore.open(),'BROWSER_RECOVERY_JSON_CORRUPT');
+  await assert.rejects(()=>open(s).persistence.eventStore.open(),e=>e instanceof BrowserRecoveryError&&e.code==='BROWSER_RECOVERY_JSON_CORRUPT');
   const forged=structuredClone(original);
   forged.events[0].subjectId='foreign-learner';
   s.setItem(key,JSON.stringify(forged));
-  reject(()=>open(s).persistence.eventStore.open(),'BROWSER_RECOVERY_EVENT_SCOPE_MISMATCH');
+  await assert.rejects(()=>open(s).persistence.eventStore.open(),e=>e instanceof BrowserRecoveryError&&e.code==='BROWSER_RECOVERY_EVENT_SCOPE_MISMATCH');
   const changed=structuredClone(original);
   changed.lessonSnapshot+=':tampered';
   s.setItem(key,JSON.stringify(changed));
-  reject(()=>open(s).persistence.eventStore.open(),'BROWSER_RECOVERY_ENVELOPE_MISMATCH');
+  await assert.rejects(()=>open(s).persistence.eventStore.open(),e=>e instanceof BrowserRecoveryError&&e.code==='BROWSER_RECOVERY_ENVELOPE_MISMATCH');
   s.setItem(key,JSON.stringify(original));
   assert.equal((await open(s).persistence.eventStore.inspectSequenceChain(lesson.lessonId,lesson.contentVersion)).valid,true);
 }
