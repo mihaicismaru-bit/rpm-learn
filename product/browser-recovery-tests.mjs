@@ -57,6 +57,8 @@ async function proceed(controller,stopId='E06'){
   assert.equal((await b.persistence.eventStore.inspectSequenceChain(lesson.lessonId,lesson.contentVersion)).valid,true);
   const same=await b.persistence.eventStore.append(before[0]);
   assert.equal(same.status,'duplicate');
+  const advanced=await b.controller.answer('E02',correct(recovered));
+  assert.equal(advanced.currentItem.id,'E03');
   await assert.rejects(()=>a.persistence.eventStore.listEvents(lesson.lessonId,lesson.contentVersion),e=>e instanceof BrowserRecoveryError&&e.code==='BROWSER_RECOVERY_CONCURRENT_CHANGE_RELOAD_REQUIRED');
 }
 
