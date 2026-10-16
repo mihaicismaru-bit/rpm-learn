@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - hardening/product-browser-recovery-v0.3
+      - qa/product-browser-recovery-e2e-20261016
   pull_request:
     branches:
       - main
@@ -34,6 +35,8 @@ jobs:
           node --check product/browser-recovery.mjs
           node --check product/browser-recovery-tests.mjs
           node product/browser-recovery-tests.mjs
+      - name: Real Chromium product reload and tamper smoke
+        run: node tools/product-browser-recovery-chrome-e2e.mjs
       - name: Full canonical deterministic regression S3-S12
         shell: bash
         run: |
