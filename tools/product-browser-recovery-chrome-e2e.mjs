@@ -76,9 +76,16 @@ async function main(){
       return poll(async()=>await evaluate(expression),label,140,100);
     }
     assert.equal(await until("document.querySelector('#learnerPanel')?.textContent?.includes('Ascultă și alege sensul.')",'first-exercise'),true);
+    // Let the async initial render bind click handlers after inserting exercise markup.
+    await sleep(350);
     const click=await evaluate(`(()=>{const button=[...document.querySelectorAll('.answer')].find(b=>b.dataset.value==='Nu înțeleg.');if(!button)return false;button.click();return true})()`);
     assert.equal(click,true);
-    assert.equal(await until("document.querySelector('#learnerPanel')?.textContent?.includes('Profesorul vorbește prea repede')",'second-exercise'),true);
+    try{
+      assert.equal(await until("document.querySelector('#learnerPanel')?.textContent?.includes('Profesorul vorbește prea repede')",'second-exercise'),true);
+    }catch(error){
+      const snapshot=await evaluate("({html:document.querySelector('#learnerPanel')?.innerText,storageKeys:Object.keys(localStorage)})");
+      throw new Error('SECOND_EXERCISE_DEBUG '+JSON.stringify(snapshot)+' '+error.message);
+    }
     const progress=await evaluate("document.querySelector('#learnerPanel .metric b')?.textContent");
     assert.equal(progress,'1/8');
     const key=await evaluate("Object.keys(localStorage).find(x=>x.includes('recovery-v1'))");
