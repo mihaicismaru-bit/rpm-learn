@@ -19,7 +19,8 @@ const browserStorage=(()=>{try{return window.localStorage}catch{return null}})()
 const {eventStore,reviewStore,validationStore}=createBrowserPersistence({
   storage:browserStorage,lesson,scope,teacher
 });
-let tick=Date.now(), view=null, currentRenderedAt=performance.now(), currentRenderedWall=Date.now();
+// Quantize monotonic measurements to whole milliseconds before persisting time evidence.
+let tick=Date.now(), view=null, currentRenderedAt=Math.floor(performance.now()), currentRenderedWall=Date.now();
 const controller=new LessonPlayerSessionController({lesson,eventStore,scope,sessionId:'rpm-functional-demo',now:()=>++tick});
 const speaking=createSpeakingSubmissionService({lesson,eventStore,scope,sessionId:'rpm-functional-speaking',now:()=>++tick});
 const reviewer=createHumanReviewBridgeService({reviewStore,reviewer:{reviewerId:teacher.teacherId,organisationId:teacher.organisationId,role:'TEACHER'},now:()=>++tick});
@@ -32,7 +33,7 @@ const fmt=ms=>{const sec=Math.floor(ms/1000);return sec<60?`${sec}s`:`${Math.flo
 async function events(){return eventStore.listEvents(lesson.lessonId,lesson.contentVersion)}
 async function creditLatest(sourceType){
   const all=await events();const source=[...all].reverse().find(e=>e.type===sourceType);if(!source)return;
-  const nowMono=performance.now(),nowWall=Date.now();
+  const nowMono=Math.floor(performance.now()),nowWall=Date.now();
   const payload=makeTimeSlicePayload({previousMono:currentRenderedAt,currentMono:nowMono,previousWall:currentRenderedWall,currentWall:nowWall,foreground:document.visibilityState==='visible',basis:'meaningful_interaction',sourceEventType:source.type,sourceEventId:source.eventId,sourceEventSeq:source.seq});
   if(payload.durationMs<=0){currentRenderedAt=nowMono;currentRenderedWall=nowWall;return}
   const chain=await eventStore.inspectSequenceChain(lesson.lessonId,lesson.contentVersion);
@@ -98,7 +99,7 @@ async function renderLearner(s){
   if($('#submitSpeaking'))$('#submitSpeaking').onclick=submitSpeaking;
   if($('#completeLesson'))$('#completeLesson').onclick=completeLesson;
   if($('#audioBtn'))$('#audioBtn').onclick=()=>{if(!cur?.audioText||!('speechSynthesis'in window))return;const u=new SpeechSynthesisUtterance(cur.audioText);u.lang='ro-RO';u.rate=.88;speechSynthesis.cancel();speechSynthesis.speak(u)};
-  currentRenderedAt=performance.now();currentRenderedWall=Date.now();
+  currentRenderedAt=Math.floor(performance.now());currentRenderedWall=Date.now();
 }
 async function renderTeacher(s){
   const t=s.teacherView,q=t.speakingReviewQueue;
