@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import {lesson} from '../canonical/s2b/v2.6/fixture.mjs';
 import {LessonPlayerSessionController} from '../canonical/s3/lesson-player/v0.1/session-controller.mjs';
 import {correctLessonResponse} from '../canonical/s3/lesson-player/v0.1/s3-test-support.mjs';
@@ -163,6 +164,20 @@ async function proceed(controller,stopId='E06'){
   assert.equal((await c.persistence.reviewStore.listReviews()).length,1);
   assert.equal((await c.persistence.validationStore.listValidations()).length,1);
   assert.equal((await c.persistence.eventStore.inspectSequenceChain(lesson.lessonId,lesson.contentVersion)).valid,true);
+}
+
+// The actual TEST app must use the validated adapter rather than silently retaining memory-only stores.
+{
+  const app=fs.readFileSync(new URL('./app.mjs',import.meta.url),'utf8');
+  for(const marker of [
+    "import {createBrowserPersistence} from './browser-recovery.mjs'",
+    'createBrowserPersistence({',
+    'storage:browserStorage,lesson,scope,teacher',
+    "window.addEventListener('unhandledrejection'",
+    'function renderRecoveryBlocked'
+  ])assert.ok(app.includes(marker),'Browser recovery TEST UI missing '+marker);
+  for(const legacy of ['class BrowserEventStore{','class ReviewStore{','class ValidationStore{'])
+    assert.equal(app.includes(legacy),false,'Memory-only TEST store must not remain '+legacy);
 }
 
 console.log('RPM_BROWSER_RECOVERY_TESTS_PASS reload-continuity content-lock scope-isolation corrupt-json replay storage-failure human-review-completion-final-validation');
